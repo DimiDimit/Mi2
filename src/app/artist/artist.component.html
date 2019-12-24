@@ -1,0 +1,26 @@
+<div *ngIf="artist$ | withLoading | async as artistL">
+  <ng-container *ngIf="artistL.value as artist">
+    <div class="row no-gutters">
+      <div class="col-auto pr-2">
+        <img [src]="avatar$ | async" [alt]="artist.name + '\'s avatar'" height="96">
+      </div>
+      <div class="col">
+        <h1>{{ artist.name }}</h1>
+        <!-- TODO: <p class="text-muted">Subtitle goes here.</p> -->
+      </div>
+    </div>
+    <p style="white-space: pre-wrap;">{{ artist.description }}</p>
+    <p>Drawings go here...</p> <!-- TODO: Drawings here too. -->
+    <div class="btn-group" role="group" aria-label="Artist actions">
+      <button class="btn btn-primary">Order from this artist</button>
+      <button class="btn btn-outline-danger">Report artist</button>
+      <!-- TODO: Implement this and add more actions -->
+    </div>
+  </ng-container>
+  <ng-template [ngIf]="artistL.loading">
+    <app-loading></app-loading>
+  </ng-template>
+  <ng-template [ngIf]="artistL.error">
+    <h1>Artist not found!</h1>
+  </ng-template>
+</div>

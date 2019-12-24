@@ -1,0 +1,11 @@
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /artists/{uid}/{path=**} {
+      allow read;
+      allow write: if request.auth.uid == uid;
+    }
+    match /profiles/{uid}/{path=**} {
+      allow read, write: if request.auth.uid == uid;
+    }
+  }
+}

@@ -1,0 +1,44 @@
+<h1>My artist profile</h1>
+<ng-container *ngIf="afAuth.user | withLoading | async as userL">
+  <ng-template [ngIf]="userL.value">
+    <ng-container *ngIf="profile$ | withLoading | async as profileL">
+      <div *ngIf="profileL.value?.isArtist; else notArtist">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label for="name">Artist name</label>
+            <input type="text" class="form-control" id="name" formControlName="name" required>
+          </div>
+          <div class="form-group">
+            <label for="avatarImg">Avatar</label>
+            <input type="file" class="form-control-file d-none" accept="image/*" id="avatar" #avatar
+                   (change)="updateAvatarPreview()">
+            <img class="d-block" height="96" style="cursor: pointer;" id="avatarImg"
+                 [src]="avatarPreview$ | async" alt="Avatar preview. Click to select a new one."
+                 title="Click here to select a new avatar." aria-describedby="avatarHelp"
+                 (click)="avatar.click()">
+            <small id="avatarHelp" class="form-text text-muted">Click on the avatar to change it.</small>
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea class="form-control" rows="5" id="description" formControlName="description"></textarea>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" [disabled]="!form.valid">Save</button>
+          <button class="btn btn-outline-danger btn-block" (click)="deleteArtistProfile()">Delete artist profile
+          </button>
+        </form>
+      </div>
+      <ng-template [ngIf]="profileL.loading">
+        <app-loading></app-loading>
+      </ng-template>
+      <ng-template [ngIf]="profileL.error" #notArtist>
+        <p>You are not an artist.</p>
+      </ng-template>
+    </ng-container>
+  </ng-template>
+  <ng-template [ngIf]="userL.loading">
+    <app-loading></app-loading>
+  </ng-template>
+  <ng-template [ngIf]="userL.error">
+    <p>Please sign in to edit your artist profile.</p>
+  </ng-template>
+</ng-container>

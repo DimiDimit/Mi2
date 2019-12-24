@@ -1,0 +1,36 @@
+<h1>My profile</h1>
+<div *ngIf="afAuth.user | withLoading | async as userL">
+  <ng-container *ngIf="userL.value as user">
+    <p><b>Note:</b> These fields are from the provider you signed in with (Google, Facebook or GitHub).</p>
+    <div class="form-group">
+      <label for="name">Name</label>
+      <input type="text" class="form-control" id="name" [value]="user.displayName" readonly>
+    </div>
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" class="form-control" id="email" [value]="user.email" readonly>
+    </div>
+    <div class="btn-group-vertical btn-block" role="group" aria-label="Profile actions">
+      <button class="btn btn-primary" (click)="becomeArtist()" *ngIf="!((profile$ | async)?.isArtist)">Become an
+        artist
+      </button>
+      <button class="btn btn-outline-danger" (click)="deleteProfile()">Delete profile</button>
+      <button class="btn btn-outline-info" data-toggle="collapse" data-target="#debug" aria-expanded="false"
+              aria-controls="debug">
+        Debug information
+      </button>
+    </div>
+    <div class="collapse" id="debug">
+      <div class="form-group">
+        <label for="uid">User ID</label>
+        <input type="text" class="form-control" id="uid" [value]="user.uid" readonly>
+      </div>
+    </div>
+  </ng-container>
+  <ng-template [ngIf]="userL.loading">
+    <app-loading></app-loading>
+  </ng-template>
+  <ng-template [ngIf]="userL.error">
+    <p>Please sign in to edit your profile.</p>
+  </ng-template>
+</div>
