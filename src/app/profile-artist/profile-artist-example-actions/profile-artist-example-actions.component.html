@@ -1,0 +1,6 @@
+<div class="btn-group w-100" role="group" aria-label="Example actions">
+  <button class="btn btn-outline-primary" type="button" (click)="exampleReplace.click()">Replace</button>
+  <button class="btn btn-outline-danger" type="button" (click)="deleteExample(example)">Delete</button>
+</div>
+<input type="file" class="form-control-file d-none" accept="image/*" #exampleReplace
+       (change)="replaceExample(example, exampleReplace)">

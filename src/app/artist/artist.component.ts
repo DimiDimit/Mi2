@@ -18,6 +18,7 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
   private artistDoc: AngularFirestoreDocument<Artist>;
   public artist$: Observable<Artist>;
   public avatar$: Observable<string>;
+  public examples: Promise<Promise<string>[]>;
   private newArtist$ = new Subject();
 
   constructor(private titleService: Title, private route: ActivatedRoute,
@@ -31,6 +32,8 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
       this.artistDoc = this.afs.doc(`artists/${this.id}`);
       this.artist$ = this.artistDoc.valueChanges();
       this.avatar$ = this.storage.ref(`artists/${this.id}/avatar`).getDownloadURL();
+      this.examples = this.storage.storage.ref(`artists/${this.id}/examples`).listAll()
+        .then(example => example.items.map(e => e.getDownloadURL()));
       this.newArtist$.next();
       this.artist$.pipe(takeUntil(this.newArtist$)).subscribe(artist => {
         setTitle(this.titleService, [artist.name, 'Artists']);

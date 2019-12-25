@@ -2,7 +2,7 @@
 <ng-container *ngIf="afAuth.user | withLoading | async as userL">
   <ng-template [ngIf]="userL.value">
     <ng-container *ngIf="profile$ | withLoading | async as profileL">
-      <div *ngIf="profileL.value?.isArtist; else notArtist">
+      <div *ngIf="profileL.value?.isArtist">
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
           <div class="form-group">
             <label for="name">Artist name</label>
@@ -22,15 +22,41 @@
             <label for="description">Description</label>
             <textarea class="form-control" rows="5" id="description" formControlName="description"></textarea>
           </div>
+          <label for="examples">Examples</label>
+          <div class="row mb-2" id="examples">
+            <div class="col-sm-4 col-md-3 col-lg-2" *ngFor="let example of examples$ | async; let index = index">
+              <div class="card">
+                <img class="card-img-top w-100" [src]="example[1] | async" [alt]="'Example #' + (index + 1)">
+                <div class="card-body p-2">
+                  <app-profile-artist-example-actions [example]="example[0]"
+                                                      [replaceExample]="replaceExample.bind(this)"
+                                                      [deleteExample]="deleteExample.bind(this)">
+                  </app-profile-artist-example-actions>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-4 col-md-3 col-lg-2">
+              <div class="card">
+                <img class="card-img-top w-100" src="/assets/add.svg" alt="Add new example">
+                <div class="card-body p-2">
+                  <button class="btn btn-primary stretched-link w-100" (click)="exampleNew.click()" type="button">Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <input type="file" class="form-control-file d-none" accept="image/*" #exampleNew
+                 (change)="addExample()">
           <button class="btn btn-primary btn-block" type="submit" [disabled]="!form.valid">Save</button>
-          <button class="btn btn-outline-danger btn-block" (click)="deleteArtistProfile()">Delete artist profile
+          <button class="btn btn-outline-danger btn-block" type="button"
+                  (click)="deleteArtistProfile()">Delete artist profile
           </button>
         </form>
       </div>
       <ng-template [ngIf]="profileL.loading">
         <app-loading></app-loading>
       </ng-template>
-      <ng-template [ngIf]="profileL.error" #notArtist>
+      <ng-template [ngIf]="!profileL.loading && (!profileL.value?.isArtist || profileL.error)">
         <p>You are not an artist.</p>
       </ng-template>
     </ng-container>

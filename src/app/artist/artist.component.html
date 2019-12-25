@@ -4,13 +4,18 @@
       <div class="col-auto pr-2">
         <img [src]="avatar$ | async" [alt]="artist.name + '\'s avatar'" height="96">
       </div>
-      <div class="col">
+      <div class="col align-self-center">
         <h1>{{ artist.name }}</h1>
         <!-- TODO: <p class="text-muted">Subtitle goes here.</p> -->
       </div>
     </div>
     <p style="white-space: pre-wrap;">{{ artist.description }}</p>
-    <p>Drawings go here...</p> <!-- TODO: Drawings here too. -->
+    <label for="examples">Examples</label>
+    <div class="row mb-1" style="margin: -0.25rem" id="examples">
+      <div class="col-6 col-sm-3 col-lg-2 p-1" *ngFor="let example of examples | async; let index = index">
+        <img class="w-100" [src]="example | async" [alt]="'Ex. #' + (index + 1)">
+      </div>
+    </div>
     <div class="btn-group" role="group" aria-label="Artist actions">
       <button class="btn btn-primary">Order from this artist</button>
       <button class="btn btn-outline-danger">Report artist</button>

@@ -12,12 +12,17 @@ import {map} from 'rxjs/operators';
 })
 export class ArtistsComponent implements OnInit {
   private artistsColl: AngularFirestoreCollection<Artist>;
-  public artists$: Observable<[Artist & { id: string; }, Observable<string>][]>;
+  public artists$: Observable<[Artist & { id: string; }, Observable<string>, Promise<Promise<string>[]>][]>;
 
   constructor(private afs: AngularFirestore, private storage: AngularFireStorage) {
     this.artistsColl = this.afs.collection('artists');
     this.artists$ = this.artistsColl.valueChanges({idField: 'id'}).pipe(map(values =>
-      values.map(value => [value, this.storage.ref(`artists/${value.id}/avatar`).getDownloadURL()])
+      values.map(value => [
+        value,
+        this.storage.ref(`artists/${value.id}/avatar`).getDownloadURL(),
+        this.storage.storage.ref(`artists/${value.id}/examples`).listAll()
+          .then(example => example.items.map(e => e.getDownloadURL()))
+      ])
     ));
   }
 

@@ -1,10 +1,14 @@
 <div class="row">
-  <div class="col-md-2" *ngFor="let artist of artists$ | async">
+  <div class="col-sm-6 col-md-4 col-lg-2" *ngFor="let artist of artists$ | async">
     <div class="card">
-      <img class="img-card-top mw-100" [src]="artist[1] | async" [alt]="artist[0].name + '\'s avatar'">
+      <img class="card-img-top w-100" [src]="artist[1] | async" [alt]="artist[0].name + '\'s avatar'">
       <div class="card-body">
         <h5 class="card-title">{{ artist[0].name }}</h5>
-        <!-- TODO: Add drawings here. -->
+        <div class="row mb-2" style="margin: -0.25rem">
+          <div class="col-3 col-md-4 col-lg-6 p-1" *ngFor="let example of artist[2] | async; let index = index">
+            <img class="w-100" [src]="example | async" [alt]="'Ex. #' + (index + 1)">
+          </div>
+        </div>
         <a class="btn btn-outline-primary stretched-link" [routerLink]="[artist[0].id]">View profile »</a>
       </div>
     </div>

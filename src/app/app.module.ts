@@ -27,6 +27,8 @@ import {AngularFireFunctionsModule} from '@angular/fire/functions';
 import {ReactiveFormsModule} from '@angular/forms';
 import {WithLoadingPipe} from './with-loading.pipe';
 import {LoadingComponent} from './loading/loading.component';
+// tslint:disable-next-line:max-line-length
+import {ProfileArtistExampleActionsComponent} from './profile-artist/profile-artist-example-actions/profile-artist-example-actions.component';
 
 const redirectUnauthorized = () => redirectUnauthorizedTo(['/signin']);
 const redirectLoggedIn = () => redirectLoggedInTo(['/']);
@@ -42,7 +44,8 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
     ProfileComponent,
     ProfileArtistComponent,
     WithLoadingPipe,
-    LoadingComponent
+    LoadingComponent,
+    ProfileArtistExampleActionsComponent
   ],
   imports: [
     NgbModule,

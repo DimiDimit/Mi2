@@ -11,6 +11,7 @@ import {Subject} from 'rxjs';
 import {uploadTaskToPromise} from '../../utils/firebase-storage-utils';
 import {swalLoading} from '../../utils/other-utils';
 import Swal from 'sweetalert2';
+import * as firebase from 'firebase';
 
 @Component({
   selector: 'app-profile-artist',
@@ -19,16 +20,23 @@ import Swal from 'sweetalert2';
 })
 export class ProfileArtistComponent extends ComponentWithArtist implements OnInit {
   @ViewChild('avatar', {static: false}) avatar: ElementRef;
+  @ViewChild('exampleNew', {static: false}) exampleNew: ElementRef;
 
   form = new FormGroup({
     name: new FormControl('', Validators.required),
     description: new FormControl('')
   });
   avatarPreview$ = new Subject<string>();
+  examples$ = new Subject<[firebase.storage.Reference, Promise<string>][]>();
 
   constructor(private router: Router, afAuth: AngularFireAuth, afs: AngularFirestore,
               private storage: AngularFireStorage, private fns: AngularFireFunctions) {
     super(afAuth, afs);
+  }
+
+  private updateExamples(uid: string) {
+    this.storage.storage.ref(`artists/${uid}/examples`).listAll()
+      .then(example => this.examples$.next(example.items.map(e => [e, e.getDownloadURL()])));
   }
 
   ngOnInit() {
@@ -41,8 +49,10 @@ export class ProfileArtistComponent extends ComponentWithArtist implements OnIni
         });
       });
     });
-    this.afAuth.user.pipe(first(value => value != null), takeUntil(this.unsubscribe)).subscribe(async user => {
-      this.avatarPreview$.next(await this.storage.storage.ref(`artists/${user.uid}/avatar`).getDownloadURL());
+    this.afAuth.user.pipe(first(value => value != null), takeUntil(this.unsubscribe)).subscribe(user => {
+      this.storage.storage.ref(`artists/${user.uid}/avatar`).getDownloadURL()
+        .then(avatar => this.avatarPreview$.next(avatar));
+      this.updateExamples(user.uid);
     });
   }
 
@@ -52,6 +62,39 @@ export class ProfileArtistComponent extends ComponentWithArtist implements OnIni
     reader.addEventListener('load', () => {
       this.avatarPreview$.next(reader.result as string);
     });
+  }
+
+  async addExample() {
+    const user = this.afAuth.auth.currentUser;
+    let id = 0;
+    await this.afs.firestore.runTransaction(async transaction => {
+      const artistRef = this.afs.firestore.collection('artists').doc(user.uid);
+      id = (await transaction.get(artistRef)).get('nextExample') || 0;
+      await transaction.update(artistRef, {nextExample: id + 1});
+    });
+    await this.storage.upload(`artists/${user.uid}/examples/${id}`, this.exampleNew.nativeElement.files[0]);
+    this.updateExamples(user.uid);
+  }
+
+  async replaceExample(example: firebase.storage.Reference, input: HTMLInputElement) {
+    const user = this.afAuth.auth.currentUser;
+    await this.storage.upload(example.fullPath, input.files[0]);
+    this.updateExamples(user.uid);
+  }
+
+  async deleteExample(example: firebase.storage.Reference) {
+    const user = this.afAuth.auth.currentUser;
+    if (!(await Swal.fire({
+      title: 'Delete example?',
+      text: 'Are you sure you want to delete this example?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Delete'
+    })).value) {
+      return;
+    }
+    await example.delete();
+    this.updateExamples(user.uid);
   }
 
   async onSubmit() {
