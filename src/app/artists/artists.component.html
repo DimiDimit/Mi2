@@ -1,4 +1,4 @@
-<div class="row">
+<div class="row" *ngIf="signedIn$ | async; else notSignedIn">
   <div class="col-sm-6 col-md-4 col-lg-2" *ngFor="let artist of artists$ | async">
     <div class="card">
       <img class="card-img-top w-100" [src]="artist[1] | async" [alt]="artist[0].name + '\'s avatar'">
@@ -14,3 +14,6 @@
     </div>
   </div>
 </div>
+<ng-template #notSignedIn>
+  <p>Please sign in to view your bookmarks.</p>
+</ng-template>

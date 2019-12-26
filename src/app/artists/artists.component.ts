@@ -16,11 +16,12 @@ import {AngularFireAuth} from '@angular/fire/auth';
 export class ArtistsComponent extends SubscribingComponent implements OnInit {
   private artistsColl: AngularFirestoreCollection<Artist>;
   public artists$: Observable<[Artist & { id: string; }, Observable<string>, Promise<Promise<string>[]>][]>;
+  public signedIn$: Observable<boolean>;
 
   constructor(private route: ActivatedRoute, private afAuth: AngularFireAuth,
               private afs: AngularFirestore, private storage: AngularFireStorage) {
     super();
-    this.artistsColl = this.afs.collection('artists');
+    this.artistsColl = afs.collection('artists');
     const useBookmarks$ = route.data.pipe(map(data => data.bookmarks));
     const bookmarks$ = afAuth.user.pipe(
       switchMap(user => (user != null ?
@@ -29,9 +30,13 @@ export class ArtistsComponent extends SubscribingComponent implements OnInit {
       ),
       map(profile => profile?.bookmarks)
     );
+    this.signedIn$ = combineLatest(useBookmarks$, afAuth.user).pipe(map(
+      ([useBookmarks, user]) =>
+        !useBookmarks || user != null)
+    );
     this.artists$ = combineLatest(useBookmarks$, bookmarks$, this.artistsColl.valueChanges({idField: 'id'})).pipe(
       map(([useBookmarks, bookmarks, values]) =>
-        values.filter(value => !useBookmarks || (bookmarks.includes(value.id)))
+        values.filter(value => !useBookmarks || (bookmarks || []).includes(value.id))
           .map(value => [
             value,
             this.storage.ref(`artists/${value.id}/avatar`).getDownloadURL(),

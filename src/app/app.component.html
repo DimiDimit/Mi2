@@ -17,7 +17,7 @@
         <a class="nav-link" routerLink="/artists" routerLinkActive="active">Artists</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" routerLink="/bookmarks" routerLinkActive="active">Bookmarks</a>
+        <a class="nav-link" routerLink="/bookmarks" routerLinkActive="active" *ngIf="afAuth.user | async">Bookmarks</a>
       </li>
     </ul>
     <ul class="navbar-nav">

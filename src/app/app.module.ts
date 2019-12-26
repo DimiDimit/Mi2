@@ -73,7 +73,12 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
       },
       {path: 'artists/:id', component: ArtistComponent, data: {title: null}},
       {path: 'artists', component: ArtistsComponent, data: {title: 'Artists'}},
-      {path: 'bookmarks', component: ArtistsComponent, data: {title: 'Bookmarks', bookmarks: true}},
+      {
+        path: 'bookmarks',
+        component: ArtistsComponent,
+        canActivate: [AngularFireAuthGuard],
+        data: {authGuardPipe: redirectUnauthorized, title: 'Bookmarks', bookmarks: true}
+      },
       {path: '', redirectTo: '/home', pathMatch: 'full'},
       {path: '**', component: NotFoundComponent, pathMatch: 'full', data: {title: 'Not found'}}
     ]),
