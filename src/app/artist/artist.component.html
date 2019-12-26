@@ -2,23 +2,29 @@
   <ng-container *ngIf="artistL.value as artist">
     <div class="row no-gutters">
       <div class="col-auto pr-2">
-        <img [src]="avatar$ | async" [alt]="artist.name + '\'s avatar'" height="96">
+        <img [src]="avatar$ | async" [alt]="artist[0].name + '\'s avatar'" height="96">
       </div>
       <div class="col align-self-center">
-        <h1>{{ artist.name }}</h1>
+        <h1>{{ artist[0].name }}</h1>
         <!-- TODO: <p class="text-muted">Subtitle goes here.</p> -->
       </div>
     </div>
-    <p style="white-space: pre-wrap;">{{ artist.description }}</p>
+    <p style="white-space: pre-wrap;">{{ artist[0].description }}</p>
     <label for="examples">Examples</label>
-    <div class="row mb-1" style="margin: -0.25rem" id="examples">
+    <div class="row mb-2" style="margin: -0.25rem" id="examples">
       <div class="col-6 col-sm-3 col-lg-2 p-1" *ngFor="let example of examples | async; let index = index">
-        <img class="w-100" [src]="example | async" [alt]="'Ex. #' + (index + 1)">
+        <a [href]="example | async">
+          <img class="w-100" [src]="example | async" [alt]="'Ex. #' + (index + 1)">
+        </a>
       </div>
     </div>
     <div class="btn-group" role="group" aria-label="Artist actions">
-      <button class="btn btn-primary">Order from this artist</button>
-      <button class="btn btn-outline-danger">Report artist</button>
+      <button class="btn btn-primary">Order</button>
+      <button class="btn btn-outline-{{ (artist[1] | async) ? 'warning' : 'primary' }}"
+              (click)="toggleBookmark()">
+        {{ (artist[1] | async) ? 'Remove bookmark' : 'Bookmark' }}
+      </button>
+      <button class="btn btn-outline-danger">Report</button>
       <!-- TODO: Implement this and add more actions -->
     </div>
   </ng-container>

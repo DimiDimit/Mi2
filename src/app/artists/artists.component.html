@@ -9,7 +9,7 @@
             <img class="w-100" [src]="example | async" [alt]="'Ex. #' + (index + 1)">
           </div>
         </div>
-        <a class="btn btn-outline-primary stretched-link" [routerLink]="[artist[0].id]">View profile »</a>
+        <a class="btn btn-outline-primary stretched-link" [routerLink]="['/artists', artist[0].id]">View profile »</a>
       </div>
     </div>
   </div>
