@@ -29,6 +29,9 @@ import {WithLoadingPipe} from './with-loading.pipe';
 import {LoadingComponent} from './loading/loading.component';
 // tslint:disable-next-line:max-line-length
 import {ProfileArtistExampleActionsComponent} from './profile-artist/profile-artist-example-actions/profile-artist-example-actions.component';
+import {ControlPanelComponent} from './control-panel/control-panel.component';
+import {ControlPanelHomeComponent} from './control-panel/control-panel-home/control-panel-home.component';
+import {AdminGuard} from './admin.guard';
 
 const redirectUnauthorized = () => redirectUnauthorizedTo(['/signin']);
 const redirectLoggedIn = () => redirectLoggedInTo(['/']);
@@ -45,7 +48,9 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
     ProfileArtistComponent,
     WithLoadingPipe,
     LoadingComponent,
-    ProfileArtistExampleActionsComponent
+    ProfileArtistExampleActionsComponent,
+    ControlPanelComponent,
+    ControlPanelHomeComponent
   ],
   imports: [
     NgbModule,
@@ -78,6 +83,20 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
         component: ArtistsComponent,
         canActivate: [AngularFireAuthGuard],
         data: {authGuardPipe: redirectUnauthorized, title: 'Bookmarks', bookmarks: true}
+      },
+      {
+        path: 'control-panel', canActivateChild: [AdminGuard], children: [
+          {
+            path: '', component: ControlPanelComponent, children: [
+              {
+                path: 'home',
+                component: ControlPanelHomeComponent,
+                data: {title: ['Home', 'Control panel']}
+              },
+              {path: '', redirectTo: 'home', pathMatch: 'full'}
+            ]
+          }
+        ]
       },
       {path: '', redirectTo: '/home', pathMatch: 'full'},
       {path: '**', component: NotFoundComponent, pathMatch: 'full', data: {title: 'Not found'}}

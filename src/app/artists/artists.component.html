@@ -1,19 +1,29 @@
-<div class="row" *ngIf="signedIn$ | async; else notSignedIn">
-  <div class="col-sm-6 col-md-4 col-lg-2" *ngFor="let artist of artists$ | async">
-    <div class="card">
-      <img class="card-img-top w-100" [src]="artist[1] | async" [alt]="artist[0].name + '\'s avatar'">
-      <div class="card-body">
-        <h5 class="card-title">{{ artist[0].name }}</h5>
-        <div class="row mb-2" style="margin: -0.25rem">
-          <div class="col-3 col-md-4 col-lg-6 p-1" *ngFor="let example of artist[2] | async; let index = index">
-            <img class="w-100" [src]="example | async" [alt]="'Ex. #' + (index + 1)">
+<ng-container *ngIf="signedIn$ | async; else notSignedIn">
+  <ng-container *ngIf="artists$ | async as artists">
+    <ng-container *ngIf="artists.length; else noArtists">
+      <div class="row">
+        <div class="col-sm-6 col-md-4 col-lg-2" *ngFor="let artist of artists">
+          <div class="card">
+            <img class="card-img-top w-100" [src]="artist[1] | async" [alt]="artist[0].name + '\'s avatar'">
+            <div class="card-body">
+              <h5 class="card-title">{{ artist[0].name }}</h5>
+              <div class="row mb-2" style="margin: -0.25rem">
+                <div class="col-3 col-md-4 col-lg-6 p-1" *ngFor="let example of artist[2] | async; let index = index">
+                  <img class="w-100" [src]="example | async" [alt]="'Ex. #' + (index + 1)">
+                </div>
+              </div>
+              <a class="btn btn-outline-primary stretched-link" [routerLink]="['/artists', artist[0].id]">View profile
+                »</a>
+            </div>
           </div>
         </div>
-        <a class="btn btn-outline-primary stretched-link" [routerLink]="['/artists', artist[0].id]">View profile »</a>
       </div>
-    </div>
-  </div>
-</div>
+    </ng-container>
+  </ng-container>
+  <ng-template #noArtists>
+    <p>{{ (useBookmarks$ | async) ? 'You haven\'t bookmarked any artists yet.' : 'There are currently no artists.' }}</p>
+  </ng-template>
+</ng-container>
 <ng-template #notSignedIn>
   <p>Please sign in to view your bookmarks.</p>
 </ng-template>

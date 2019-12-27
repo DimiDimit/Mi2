@@ -14,6 +14,7 @@ import {AngularFireAuth} from '@angular/fire/auth';
   styleUrls: ['./artists.component.scss']
 })
 export class ArtistsComponent extends SubscribingComponent implements OnInit {
+  public useBookmarks$: Observable<boolean>;
   private artistsColl: AngularFirestoreCollection<Artist>;
   public artists$: Observable<[Artist & { id: string; }, Observable<string>, Promise<Promise<string>[]>][]>;
   public signedIn$: Observable<boolean>;
@@ -21,20 +22,20 @@ export class ArtistsComponent extends SubscribingComponent implements OnInit {
   constructor(private route: ActivatedRoute, private afAuth: AngularFireAuth,
               private afs: AngularFirestore, private storage: AngularFireStorage) {
     super();
-    this.artistsColl = afs.collection('artists');
-    const useBookmarks$ = route.data.pipe(map(data => data.bookmarks));
-    const bookmarks$ = afAuth.user.pipe(
+    this.artistsColl = this.afs.collection('artists');
+    this.useBookmarks$ = this.route.data.pipe(map(data => data.bookmarks));
+    const bookmarks$ = this.afAuth.user.pipe(
       switchMap(user => (user != null ?
-        afs.doc(`profiles/${user.uid}`).valueChanges() :
+        this.afs.doc(`profiles/${user.uid}`).valueChanges() :
         of(null)) as Observable<Profile | undefined | null>
       ),
       map(profile => profile?.bookmarks)
     );
-    this.signedIn$ = combineLatest(useBookmarks$, afAuth.user).pipe(map(
+    this.signedIn$ = combineLatest(this.useBookmarks$, this.afAuth.user).pipe(map(
       ([useBookmarks, user]) =>
         !useBookmarks || user != null)
     );
-    this.artists$ = combineLatest(useBookmarks$, bookmarks$, this.artistsColl.valueChanges({idField: 'id'})).pipe(
+    this.artists$ = combineLatest(this.useBookmarks$, bookmarks$, this.artistsColl.valueChanges({idField: 'id'})).pipe(
       map(([useBookmarks, bookmarks, values]) =>
         values.filter(value => !useBookmarks || (bookmarks || []).includes(value.id))
           .map(value => [

@@ -6,7 +6,7 @@ import {AngularFireStorage} from '@angular/fire/storage';
 import {callAndNavigate, ComponentWithArtist, performSensitiveAction} from '../../utils/profile-utils';
 import {AngularFireFunctions} from '@angular/fire/functions';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
-import {first, take, takeUntil} from 'rxjs/operators';
+import {first, switchMap, take, takeUntil} from 'rxjs/operators';
 import {Subject} from 'rxjs';
 import {uploadTaskToPromise} from '../../utils/firebase-storage-utils';
 import {swalLoading} from '../../utils/other-utils';
@@ -41,12 +41,15 @@ export class ProfileArtistComponent extends ComponentWithArtist implements OnIni
 
   ngOnInit() {
     super.ngOnInit();
-    this.newProfile$.pipe(take(1)).subscribe(() => {
-      this.artist$.pipe(take(1), takeUntil(this.unsubscribe)).subscribe(artist => {
-        this.form.setValue({
-          name: artist.name,
-          description: artist.description
-        });
+    this.newProfile$.pipe(
+      take(1),
+      switchMap(() => this.artist$),
+      take(1),
+      takeUntil(this.unsubscribe)
+    ).subscribe(artist => {
+      this.form.setValue({
+        name: artist.name,
+        description: artist.description
       });
     });
     this.afAuth.user.pipe(first(value => value != null), takeUntil(this.unsubscribe)).subscribe(user => {

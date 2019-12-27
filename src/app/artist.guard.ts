@@ -2,7 +2,6 @@ import {Injectable} from '@angular/core';
 import {ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot, UrlTree} from '@angular/router';
 import {AngularFirestore} from '@angular/fire/firestore';
 import {AngularFireAuth} from '@angular/fire/auth';
-import {take} from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +11,11 @@ export class ArtistGuard implements CanActivate {
   }
 
   async canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean | UrlTree> {
-    const doc = await this.afs.firestore.collection('profiles').doc((await this.afAuth.user.pipe(take(1)).toPromise()).uid).get();
+    const user = this.afAuth.auth.currentUser;
+    if (user == null) {
+      return this.router.parseUrl('/signin');
+    }
+    const doc = await this.afs.firestore.collection('profiles').doc(user.uid).get();
     if (!doc.exists) {
       return false;
     }
