@@ -104,7 +104,7 @@ export class ProfileArtistComponent extends ComponentWithArtist implements OnIni
     try {
       swalLoading('Saving artist profile...',
         'Please wait while the changes to your artist profile are being saved...');
-      const user = await this.afAuth.auth.currentUser;
+      const user = this.afAuth.auth.currentUser;
       await this.afs.doc(`artists/${user.uid}`).update(this.form.value);
       if (this.avatar.nativeElement.files.length > 0) {
         await uploadTaskToPromise(this.storage.storage.ref(`artists/${user.uid}/avatar`).put(this.avatar.nativeElement.files[0]));

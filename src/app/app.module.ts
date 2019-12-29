@@ -30,8 +30,8 @@ import {LoadingComponent} from './loading/loading.component';
 // tslint:disable-next-line:max-line-length
 import {ProfileArtistExampleActionsComponent} from './profile-artist/profile-artist-example-actions/profile-artist-example-actions.component';
 import {ControlPanelComponent} from './control-panel/control-panel.component';
-import {ControlPanelHomeComponent} from './control-panel/control-panel-home/control-panel-home.component';
 import {AdminGuard} from './admin.guard';
+import {ControlPanelReportsComponent} from './control-panel/control-panel-reports/control-panel-reports.component';
 
 const redirectUnauthorized = () => redirectUnauthorizedTo(['/signin']);
 const redirectLoggedIn = () => redirectLoggedInTo(['/']);
@@ -50,7 +50,7 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
     LoadingComponent,
     ProfileArtistExampleActionsComponent,
     ControlPanelComponent,
-    ControlPanelHomeComponent
+    ControlPanelReportsComponent
   ],
   imports: [
     NgbModule,
@@ -89,11 +89,11 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
           {
             path: '', component: ControlPanelComponent, children: [
               {
-                path: 'home',
-                component: ControlPanelHomeComponent,
-                data: {title: ['Home', 'Control panel']}
+                path: 'reports',
+                component: ControlPanelReportsComponent,
+                data: {title: ['Reports', 'Control panel']}
               },
-              {path: '', redirectTo: 'home', pathMatch: 'full'}
+              {path: '', redirectTo: 'reports', pathMatch: 'full'}
             ]
           }
         ]

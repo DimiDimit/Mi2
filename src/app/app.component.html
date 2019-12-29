@@ -24,7 +24,7 @@
       </ng-template>
       <ng-container *ngIf="inControlPanel$ | async; else notControlPanel">
         <li class="nav-item">
-          <a class="nav-link" routerLink="/control-panel/home" routerLinkActive="active">Home</a>
+          <a class="nav-link" routerLink="/control-panel/reports" routerLinkActive="active">Reports</a>
         </li>
       </ng-container>
     </ul>
@@ -35,10 +35,10 @@
           {{ (inControlPanel$ | async) ? "Exit control panel" : "Control panel" }}
         </a>
       </li>
-      <li class="nav-item align-self-center" ngbDropdown *ngIf="afAuth.user | async as user; else signin">
+      <li class="nav-item align-self-center" ngbDropdown *ngIf="afAuth.user | async; else signin">
         <a class="nav-link dropdown-toggle btn py-0 pr-0" id="profileDropdown" ngbDropdownToggle
            role="button" aria-haspopup="true" aria-expanded="false">
-          <img [src]="user.photoURL" [alt]="user.displayName" width="30" height="30">
+          <img [src]="avatar$ | async" [alt]="(profile$ | async)?.name" width="30" height="30">
         </a>
         <div class="dropdown-menu-right" ngbDropdownMenu aria-labelledby="profileDropdown">
           <a ngbDropdownItem routerLink="/profile" routerLinkActive="active">My profile</a>

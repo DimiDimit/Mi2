@@ -24,7 +24,7 @@
               (click)="toggleBookmark()">
         {{ (artist[1] | async) ? 'Remove bookmark' : 'Bookmark' }}
       </button>
-      <button class="btn btn-outline-danger">Report</button>
+      <button class="btn btn-outline-danger" (click)="report()">Report</button>
       <!-- TODO: Implement this and add more actions -->
     </div>
   </ng-container>

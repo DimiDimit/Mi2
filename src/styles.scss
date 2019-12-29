@@ -5,6 +5,7 @@ $primary: #1bc4de;
 @import "~bootstrap/scss/bootstrap";
 @import "~font-awesome/css/font-awesome.min.css";
 
-body {
+.body {
   overflow-x: hidden;
+  position: relative;
 }

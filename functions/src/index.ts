@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 // import * as request from 'request-promise-native';
-import {Artist} from '../../src/utils/firestore-types';
+import {Artist, Report} from '../../src/utils/firestore-types';
 
 export class AccessDeniedError extends Error {
   constructor(message = 'Access denied.') {
@@ -72,4 +72,17 @@ export const deleteArtistProfile = functions.https.onCall(async (data, context) 
   const uid = context.auth.uid;
   const user = await admin.auth().getUser(uid);
   await deleteArtistProfilePure(user);
+});
+
+export const reportArtist = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new AccessDeniedError();
+  }
+  const uid = context.auth.uid;
+  const report: Report = {
+    reporter: uid,
+    reportee: data.reportee,
+    message: data.message
+  };
+  await admin.firestore().collection('reports').add(report);
 });

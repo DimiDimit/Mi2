@@ -5,10 +5,11 @@ import {Observable, of, Subject} from 'rxjs';
 import {ActivatedRoute, Router} from '@angular/router';
 import {map, switchMap, takeUntil} from 'rxjs/operators';
 import {AngularFireStorage} from '@angular/fire/storage';
-import {setTitle, SubscribingComponent} from '../../utils/other-utils';
+import {setTitle, SubscribingComponent, swalLoading} from '../../utils/other-utils';
 import {Title} from '@angular/platform-browser';
 import {AngularFireAuth} from '@angular/fire/auth';
 import Swal from 'sweetalert2';
+import {AngularFireFunctions} from '@angular/fire/functions';
 
 @Component({
   selector: 'app-artist',
@@ -24,7 +25,8 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
   private newArtist$ = new Subject();
 
   constructor(private titleService: Title, private router: Router, private route: ActivatedRoute,
-              private afAuth: AngularFireAuth, private afs: AngularFirestore, private storage: AngularFireStorage) {
+              private afAuth: AngularFireAuth, private afs: AngularFirestore,
+              private storage: AngularFireStorage, private fns: AngularFireFunctions) {
     super();
   }
 
@@ -68,6 +70,37 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
       if ((await Swal.fire({
         title: 'Sign in required',
         text: 'You need to sign in to bookmark this artist.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sign in'
+      })).value) {
+        await this.router.navigate(['/signin']);
+      }
+    }
+  }
+
+  async report() {
+    const user = this.afAuth.auth.currentUser;
+    if (user != null) {
+      const message = await Swal.fire({
+        title: 'Report artist',
+        html: `Please enter the reason you're reporting the artist <b>${(await this.artistDoc.ref.get()).get('name')}</b>:`,
+        icon: 'warning',
+        input: 'text',
+        showCancelButton: true,
+        confirmButtonText: 'Report',
+        inputValidator: value => !value && 'Please enter the reason!'
+      });
+      if (!message.value) {
+        return;
+      }
+      swalLoading('Reporting artist...', 'Please wait while the artist is being reported...');
+      await this.fns.functions.httpsCallable('reportArtist')({reportee: this.id, message: message.value});
+      await Swal.fire('Artist reported', 'Artist reported successfully.', 'success');
+    } else {
+      if ((await Swal.fire({
+        title: 'Sign in required',
+        text: 'You need to sign in to report this artist.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Sign in'

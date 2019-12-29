@@ -3,12 +3,13 @@ import {AngularFireAuth} from '@angular/fire/auth';
 import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 
 import Swal from 'sweetalert2';
-import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
-import {ComponentWithProfile} from '../utils/profile-utils';
+import {AngularFirestore} from '@angular/fire/firestore';
+import {ComponentWithProfile, getIsAdmin} from '../utils/profile-utils';
 import {filter, map, shareReplay, switchMap} from 'rxjs/operators';
 import {Title} from '@angular/platform-browser';
 import {setTitle} from '../utils/other-utils';
-import {combineLatest, Observable, of} from 'rxjs';
+import {Observable, of} from 'rxjs';
+import {AngularFireStorage} from '@angular/fire/storage';
 
 @Component({
   selector: 'app-root',
@@ -19,16 +20,14 @@ export class AppComponent extends ComponentWithProfile implements OnInit {
   title = 'Mi2';
 
   private route$: Observable<ActivatedRoute>;
-  private adminsDoc: AngularFirestoreDocument<{ admins: string[] }>;
   isAdmin$: Observable<boolean>;
   inControlPanel$: Observable<boolean>;
+  avatar$: Observable<string>;
 
   constructor(private router: Router, private route: ActivatedRoute, private titleService: Title,
-              afAuth: AngularFireAuth, afs: AngularFirestore) {
+              afAuth: AngularFireAuth, afs: AngularFirestore, private storage: AngularFireStorage) {
     super(afAuth, afs);
-    this.adminsDoc = afs.doc('other/admins');
-    this.isAdmin$ = combineLatest(afAuth.user, this.adminsDoc.valueChanges()).pipe(map(
-      ([user, admins]) => user != null && admins.admins.includes(user.uid)));
+    this.isAdmin$ = getIsAdmin(afAuth, afs);
     this.route$ = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       map(() => this.route)
@@ -38,6 +37,8 @@ export class AppComponent extends ComponentWithProfile implements OnInit {
       map(segments => segments[0]?.path === 'control-panel'),
       shareReplay(1)
     );
+    this.avatar$ = this.newProfile$.pipe(switchMap(
+      user => this.storage.ref(`profiles/${user.uid}/avatar`).getDownloadURL()));
   }
 
   ngOnInit() {

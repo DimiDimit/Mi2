@@ -1,31 +1,44 @@
 <h1>My profile</h1>
 <div *ngIf="afAuth.user | withLoading | async as userL">
   <ng-container *ngIf="userL.value as user">
-    <p><b>Note:</b> These fields are from the provider you signed in with (Google, Facebook or GitHub).</p>
-    <div class="form-group">
-      <label for="name">Name</label>
-      <input type="text" class="form-control" id="name" [value]="user.displayName" readonly>
-    </div>
-    <div class="form-group">
-      <label for="email">Email</label>
-      <input type="email" class="form-control" id="email" [value]="user.email" readonly>
-    </div>
-    <div class="btn-group-vertical btn-block" role="group" aria-label="Profile actions">
-      <button class="btn btn-primary" (click)="becomeArtist()" *ngIf="!((profile$ | async)?.isArtist)">Become an
-        artist
-      </button>
-      <button class="btn btn-outline-danger" (click)="deleteProfile()">Delete profile</button>
-      <button class="btn btn-outline-info" data-toggle="collapse" data-target="#debug" aria-expanded="false"
-              aria-controls="debug">
-        Debug information
-      </button>
-    </div>
-    <div class="collapse" id="debug">
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
       <div class="form-group">
-        <label for="uid">User ID</label>
-        <input type="text" class="form-control" id="uid" [value]="user.uid" readonly>
+        <label for="name">Name</label>
+        <input type="text" class="form-control" id="name" formControlName="name" required>
       </div>
-    </div>
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input type="email" class="form-control" id="email" formControlName="email" readonly>
+      </div>
+      <div class="form-group">
+        <label for="avatarImg">Avatar</label>
+        <input type="file" class="form-control-file d-none" accept="image/*" id="avatar" #avatar
+               (change)="updateAvatarPreview()">
+        <img class="d-block" height="96" style="cursor: pointer;" id="avatarImg"
+             [src]="avatarPreview$ | async" alt="Avatar preview. Click to select a new one."
+             title="Click here to select a new avatar." aria-describedby="avatarHelp"
+             (click)="avatar.click()">
+        <small id="avatarHelp" class="form-text text-muted">Click on the avatar to change it.</small>
+      </div>
+      <button class="btn btn-primary btn-block" type="submit" [disabled]="!form.valid">Save</button>
+      <div class="btn-group-vertical btn-block" role="group" aria-label="Profile actions">
+        <button class="btn btn-primary" type="button" (click)="becomeArtist()" *ngIf="!((profile$ | async)?.isArtist)">
+          Become an artist
+        </button>
+        <button class="btn btn-outline-danger" type="button" (click)="deleteProfile()">Delete profile</button>
+        <button class="btn btn-outline-info" type="button" data-toggle="collapse" data-target="#debug"
+                aria-expanded="false"
+                aria-controls="debug">
+          Debug information
+        </button>
+      </div>
+      <div class="collapse" id="debug">
+        <div class="form-group">
+          <label for="uid">User ID</label>
+          <input type="text" class="form-control" id="uid" [value]="user.uid" readonly>
+        </div>
+      </div>
+    </form>
   </ng-container>
   <ng-template [ngIf]="userL.loading">
     <app-loading></app-loading>

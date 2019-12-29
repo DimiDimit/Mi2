@@ -3,12 +3,12 @@ import * as firebase from 'firebase';
 import {User} from 'firebase';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Artist, Profile} from './firestore-types';
-import {Observable, Subject} from 'rxjs';
+import {combineLatest, Observable, ReplaySubject} from 'rxjs';
 import {AngularFireAuth} from '@angular/fire/auth';
 import {Router} from '@angular/router';
 import {SubscribingComponent, swalLoading} from './other-utils';
 import {OnInit} from '@angular/core';
-import {takeUntil} from 'rxjs/operators';
+import {filter, map, takeUntil} from 'rxjs/operators';
 
 export function callAndNavigate(functions: firebase.functions.Functions, router: Router,
                                 callable: string, navigate: any[]): () => Promise<void> {
@@ -58,11 +58,7 @@ export async function performSensitiveAction(user: firebase.User, strings: Perfo
       input: 'text',
       showCancelButton: true,
       inputPlaceholder: name,
-      inputValidator(value: string): string | null {
-        if (value !== name) {
-          return 'Please enter your name!';
-        }
-      }
+      inputValidator: value => value !== name && 'Please enter your name!'
     })).dismiss !== undefined) {
       return;
     }
@@ -79,22 +75,17 @@ export async function performSensitiveAction(user: firebase.User, strings: Perfo
 export abstract class ComponentWithProfile extends SubscribingComponent implements OnInit {
   protected profileDoc: AngularFirestoreDocument<Profile>;
   public profile$: Observable<Profile>;
-  protected newProfile$ = new Subject<User>();
+  protected newProfile$ = new ReplaySubject<User>(1);
 
   protected constructor(public afAuth: AngularFireAuth, protected afs: AngularFirestore) {
     super();
   }
 
   ngOnInit() {
-    this.afAuth.user.pipe(takeUntil(this.unsubscribe)).subscribe(user => {
-      if (user != null) {
-        this.profileDoc = this.afs.doc(`profiles/${user.uid}`);
-        this.profile$ = this.profileDoc.valueChanges();
-        this.newProfile$.next(user);
-      } /*else {
-          this.profileDoc = undefined;
-          this.profile = of(undefined);
-        }*/
+    this.afAuth.user.pipe(filter(user => user != null), takeUntil(this.unsubscribe)).subscribe(user => {
+      this.profileDoc = this.afs.doc(`profiles/${user.uid}`);
+      this.profile$ = this.profileDoc.valueChanges();
+      this.newProfile$.next(user);
     });
     this.unsubscribe.subscribe(() => this.newProfile$.complete());
   }
@@ -115,4 +106,9 @@ export abstract class ComponentWithArtist extends ComponentWithProfile implement
       this.artist$ = this.artistDoc.valueChanges();
     });
   }
+}
+
+export function getIsAdmin(afAuth: AngularFireAuth, afs: AngularFirestore): Observable<boolean> {
+  return combineLatest(afAuth.user, afs.doc<{ admins: string[]; }>('other/admins').valueChanges()).pipe(map(
+    ([user, admins]) => user != null && admins.admins.includes(user.uid)));
 }
