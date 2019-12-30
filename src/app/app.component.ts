@@ -5,7 +5,7 @@ import {ActivatedRoute, NavigationEnd, Router} from '@angular/router';
 import Swal from 'sweetalert2';
 import {AngularFirestore} from '@angular/fire/firestore';
 import {ComponentWithProfile, getIsAdmin} from '../utils/profile-utils';
-import {filter, map, shareReplay, switchMap} from 'rxjs/operators';
+import {catchError, filter, map, shareReplay, switchMap} from 'rxjs/operators';
 import {Title} from '@angular/platform-browser';
 import {setTitle} from '../utils/other-utils';
 import {Observable, of} from 'rxjs';
@@ -38,7 +38,8 @@ export class AppComponent extends ComponentWithProfile implements OnInit {
       shareReplay(1)
     );
     this.avatar$ = this.newProfile$.pipe(switchMap(
-      user => this.storage.ref(`profiles/${user.uid}/avatar`).getDownloadURL()));
+      user => this.storage.ref(`profiles/${user.uid}/avatar`).getDownloadURL()
+        .pipe(catchError(() => of(user.photoURL)))));
   }
 
   ngOnInit() {

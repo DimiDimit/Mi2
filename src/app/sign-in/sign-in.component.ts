@@ -30,7 +30,7 @@ export class SignInComponent implements OnInit {
           isArtist: false
         };
         transaction.set(docRef, profile);
-        await uploadTaskToPromise(this.storage.storage.ref(`profiles/${user.uid}/avatar`).put(await (await fetch(user.photoURL)).blob()));
+        await uploadTaskToPromise(this.storage.upload(`profiles/${user.uid}/avatar`, await (await fetch(user.photoURL)).blob()).task);
       } else {
         transaction.update(docRef, {});
       }

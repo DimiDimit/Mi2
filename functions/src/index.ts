@@ -12,7 +12,8 @@ export class AccessDeniedError extends Error {
 
 admin.initializeApp({
   credential: admin.credential.cert(require('../../../service-account-key.json')),
-  databaseURL: 'https://d-mi2-1564330446417.firebaseio.com'
+  databaseURL: 'https://d-mi2-1564330446417.firebaseio.com',
+  storageBucket: 'd-mi2-1564330446417.appspot.com'
 });
 
 async function deleteArtistProfilePure(user: admin.auth.UserRecord) {
@@ -63,6 +64,11 @@ export const deleteProfile = functions.https.onCall(async (data, context) => {
   if (userDoc.exists) {
     await deleteArtistProfilePure(user);
   }
+  const batch = admin.firestore().batch();
+  const reports = admin.firestore().collection('reports');
+  (await reports.where('reporter', '==', uid).get()).forEach(doc => batch.delete(doc.ref));
+  (await reports.where('reportee', '==', uid).get()).forEach(doc => batch.delete(doc.ref));
+  await batch.commit();
   await admin.auth().deleteUser(uid);
 });
 export const deleteArtistProfile = functions.https.onCall(async (data, context) => {

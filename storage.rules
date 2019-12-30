@@ -5,8 +5,14 @@ service firebase.storage {
       allow read;
       allow write: if request.auth.uid == uid;
     }
-    match /profiles/{uid}/{path=**} {
-      allow read, write: if request.auth.uid == uid;
+    match /profiles/{uid} {
+    	match /avatar {
+      	allow read;
+        allow write: if request.auth.uid == uid;
+      }
+    	match /{path=**} {
+      	allow read, write: if request.auth.uid == uid;
+      }
     }
   }
 }

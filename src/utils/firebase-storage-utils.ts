@@ -12,8 +12,8 @@ import UploadTaskSnapshot = firebase.storage.UploadTaskSnapshot;
 }*/
 
 export function uploadTaskToPromise(task: firebase.storage.UploadTask): Promise<UploadTaskSnapshot> {
-  /*return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     task.on(firebase.storage.TaskEvent.STATE_CHANGED, null, reject, resolve);
-  });*/
-  return new Promise<UploadTaskSnapshot>((resolve, reject) => task.then(resolve, reject));
+  });
+  // return new Promise<UploadTaskSnapshot>((resolve, reject) => task.then(resolve, reject));
 }
