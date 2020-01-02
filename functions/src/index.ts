@@ -16,6 +16,10 @@ admin.initializeApp({
   storageBucket: 'd-mi2-1564330446417.appspot.com'
 });
 
+async function isAdmin(uid: string): Promise<boolean> {
+  return (await admin.firestore().collection('other').doc('admins').get()).get('admins').includes(uid);
+}
+
 async function deleteArtistProfilePure(user: admin.auth.UserRecord) {
   const userDocRef = admin.firestore().collection('artists').doc(user.uid);
   await admin.firestore().runTransaction(async transaction => {
@@ -25,6 +29,9 @@ async function deleteArtistProfilePure(user: admin.auth.UserRecord) {
   await admin.storage().bucket().deleteFiles({
     directory: `artists/${user.uid}`
   });
+  const batch = admin.firestore().batch();
+  (await admin.firestore().collection('reports').where('reportee', '==', user.uid).get()).forEach(doc => batch.delete(doc.ref));
+  await batch.commit();
 }
 
 export const becomeArtist = functions.https.onCall(async (data, context) => {
@@ -65,9 +72,7 @@ export const deleteProfile = functions.https.onCall(async (data, context) => {
     await deleteArtistProfilePure(user);
   }
   const batch = admin.firestore().batch();
-  const reports = admin.firestore().collection('reports');
-  (await reports.where('reporter', '==', uid).get()).forEach(doc => batch.delete(doc.ref));
-  (await reports.where('reportee', '==', uid).get()).forEach(doc => batch.delete(doc.ref));
+  (await admin.firestore().collection('reports').where('reporter', '==', uid).get()).forEach(doc => batch.delete(doc.ref));
   await batch.commit();
   await admin.auth().deleteUser(uid);
 });
@@ -75,7 +80,13 @@ export const deleteArtistProfile = functions.https.onCall(async (data, context) 
   if (!context.auth) {
     throw new AccessDeniedError();
   }
-  const uid = context.auth.uid;
+  let uid = context.auth.uid;
+  if (data && data !== uid) {
+    if (!await isAdmin(uid)) {
+      throw new AccessDeniedError();
+    }
+    uid = data;
+  }
   const user = await admin.auth().getUser(uid);
   await deleteArtistProfilePure(user);
 });

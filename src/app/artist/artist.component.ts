@@ -10,6 +10,7 @@ import {Title} from '@angular/platform-browser';
 import {AngularFireAuth} from '@angular/fire/auth';
 import Swal from 'sweetalert2';
 import {AngularFireFunctions} from '@angular/fire/functions';
+import {getIsAdmin} from '../../utils/profile-utils';
 
 @Component({
   selector: 'app-artist',
@@ -23,11 +24,13 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
   public avatar$: Observable<string>;
   public examples: Promise<Promise<string>[]>;
   private newArtist$ = new Subject();
+  public isAdmin$: Observable<boolean>;
 
   constructor(private titleService: Title, private router: Router, private route: ActivatedRoute,
               private afAuth: AngularFireAuth, private afs: AngularFirestore,
               private storage: AngularFireStorage, private fns: AngularFireFunctions) {
     super();
+    this.isAdmin$ = getIsAdmin(afAuth, afs);
   }
 
   ngOnInit() {
@@ -35,19 +38,19 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
       this.id = params.get('id');
       this.artistDoc = this.afs.doc(`artists/${this.id}`);
       this.artist$ = this.artistDoc.valueChanges().pipe(map(artist =>
-        [artist, this.afAuth.user.pipe(
+        artist != null ? [artist, this.afAuth.user.pipe(
           switchMap(user => (user != null ?
             this.afs.doc(`profiles/${user.uid}`).valueChanges() :
             of(null)) as Observable<Profile | undefined | null>),
           map(profile => (profile?.bookmarks || []).includes(this.id))
-        )]
+        )] : undefined
       ));
       this.avatar$ = this.storage.ref(`artists/${this.id}/avatar`).getDownloadURL();
       this.examples = this.storage.storage.ref(`artists/${this.id}/examples`).listAll()
         .then(example => example.items.map(e => e.getDownloadURL()));
       this.newArtist$.next();
       this.artist$.pipe(takeUntil(this.newArtist$)).subscribe(artist => {
-        setTitle(this.titleService, [artist[0].name, 'Artists']);
+        setTitle(this.titleService, [artist?.[0]?.name || 'Not found', 'Artists']);
       });
     });
     this.unsubscribe.subscribe(() => this.newArtist$.complete());
@@ -107,6 +110,26 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
       })).value) {
         await this.router.navigate(['/signin']);
       }
+    }
+  }
+
+  async delete() {
+    try {
+      if (!(await Swal.fire({
+        title: 'Delete artist',
+        html: `Are you sure you want to delete the artist <b>${(await this.artistDoc.ref.get()).get('name')}</b>? This action cannot be undone!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Delete'
+      })).value) {
+        return;
+      }
+      swalLoading('Deleting artist...', 'Please wait while the artist is being deleted...');
+      await this.router.navigate(['/artists']);
+      await this.fns.functions.httpsCallable('deleteArtistProfile')(this.id);
+      await Swal.fire('Artist deleted', 'Artist deleted successfully.', 'success');
+    } catch (e) {
+      await Swal.fire('Error deleting artist', e.toString(), 'error');
     }
   }
 }
