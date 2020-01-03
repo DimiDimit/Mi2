@@ -9,17 +9,17 @@
           <ng-container *ngIf="reports.length; else noReports">
             <div class="card w-100" *ngFor="let report of reports">
               <div class="row no-gutters">
-                <div class="col-1">
+                <div class="col-sm-2 col-lg-1">
                   <a [routerLink]="['/artists', report.reportee[2]]">
                     <img class="card-img" [src]="report.reportee[1] | async"
                          [alt]="(report.reportee[0] | async)?.name + '\'s avatar'">
                   </a>
                 </div>
-                <div class="col-1">
+                <div class="col-sm-2 col-lg-1">
                   <img class="card-img" [src]="report.reporter[1] | async"
                        [alt]="(report.reporter[0] | async)?.name + '\'s avatar'">
                 </div>
-                <div class="col">
+                <div class="col-sm">
                   <div class="card-body">
                     <h5 class="card-title">
                       {{ (report.reportee[0] | async)?.name }} « {{ (report.reporter[0] | async)?.name }}
@@ -27,7 +27,7 @@
                     <p class="card-text">{{ report.message }}</p>
                   </div>
                 </div>
-                <div class="col-1">
+                <div class="col-sm-2 col-lg-1">
                   <button class="btn btn-danger w-100 h-100" (click)="dismiss(report.id)">Dismiss</button>
                 </div>
               </div>

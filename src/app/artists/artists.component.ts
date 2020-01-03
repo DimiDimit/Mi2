@@ -5,7 +5,6 @@ import {Artist, Profile} from '../../utils/firestore-types';
 import {AngularFireStorage} from '@angular/fire/storage';
 import {map, switchMap} from 'rxjs/operators';
 import {ActivatedRoute} from '@angular/router';
-import {SubscribingComponent} from '../../utils/other-utils';
 import {AngularFireAuth} from '@angular/fire/auth';
 
 @Component({
@@ -13,7 +12,7 @@ import {AngularFireAuth} from '@angular/fire/auth';
   templateUrl: './artists.component.html',
   styleUrls: ['./artists.component.scss']
 })
-export class ArtistsComponent extends SubscribingComponent implements OnInit {
+export class ArtistsComponent implements OnInit {
   public useBookmarks$: Observable<boolean>;
   private artistsColl: AngularFirestoreCollection<Artist>;
   public artists$: Observable<[Artist & { id: string; }, Observable<string>, Promise<Promise<string>[]>][]>;
@@ -21,7 +20,6 @@ export class ArtistsComponent extends SubscribingComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private afAuth: AngularFireAuth,
               private afs: AngularFirestore, private storage: AngularFireStorage) {
-    super();
     this.artistsColl = this.afs.collection('artists');
     this.useBookmarks$ = this.route.data.pipe(map(data => data.bookmarks));
     const bookmarks$ = this.afAuth.user.pipe(

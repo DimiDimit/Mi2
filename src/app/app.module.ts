@@ -31,6 +31,7 @@ import {LoadingComponent} from './loading/loading.component';
 import {ProfileArtistExampleActionsComponent} from './profile-artist/profile-artist-example-actions/profile-artist-example-actions.component';
 import {ControlPanelComponent} from './control-panel/control-panel.component';
 import {AdminGuard} from './admin.guard';
+import {ControlPanelProfilesComponent} from './control-panel/control-panel-profiles/control-panel-profiles.component';
 import {ControlPanelReportsComponent} from './control-panel/control-panel-reports/control-panel-reports.component';
 
 const redirectUnauthorized = () => redirectUnauthorizedTo(['/signin']);
@@ -50,6 +51,7 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
     LoadingComponent,
     ProfileArtistExampleActionsComponent,
     ControlPanelComponent,
+    ControlPanelProfilesComponent,
     ControlPanelReportsComponent
   ],
   imports: [
@@ -89,11 +91,16 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
           {
             path: '', component: ControlPanelComponent, children: [
               {
+                path: 'profiles',
+                component: ControlPanelProfilesComponent,
+                data: {title: ['Profiles', 'Control panel']}
+              },
+              {
                 path: 'reports',
                 component: ControlPanelReportsComponent,
                 data: {title: ['Reports', 'Control panel']}
               },
-              {path: '', redirectTo: 'reports', pathMatch: 'full'}
+              {path: '', redirectTo: 'profiles', pathMatch: 'full'}
             ]
           }
         ]

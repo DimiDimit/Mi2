@@ -18,7 +18,7 @@
         </a>
       </div>
     </div>
-    <div class="btn-group" role="group" aria-label="Artist actions" *ngIf="!(isThis$ | async)">
+    <div class="btn-group" role="group" aria-label="Artist actions" *ngIf="(isThis$ | async) === false">
       <button class="btn btn-primary">Order</button>
       <button class="btn btn-outline-{{ (artist[1] | async) ? 'warning' : 'primary' }}"
               (click)="toggleBookmark()">

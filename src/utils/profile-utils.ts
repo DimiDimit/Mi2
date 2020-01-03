@@ -9,6 +9,7 @@ import {Router} from '@angular/router';
 import {SubscribingComponent, swalLoading} from './other-utils';
 import {OnInit} from '@angular/core';
 import {filter, map, takeUntil} from 'rxjs/operators';
+import * as _ from 'lodash';
 
 export function callAndNavigate(functions: firebase.functions.Functions, router: Router,
                                 callable: string, navigate: any[]): () => Promise<void> {
@@ -52,7 +53,7 @@ export async function performSensitiveAction(user: firebase.User, strings: Perfo
       html: [
         `Are you sure you want to ${strings.action}?`,
         strings.confirmExtra,
-        `If so, please enter your name (<b>${name}</b>) below:`
+        `If so, please enter your name (<b>${_.escape(name)}</b>) below:`
       ].filter(e => e != null).join(' '),
       icon: 'warning',
       input: 'text',

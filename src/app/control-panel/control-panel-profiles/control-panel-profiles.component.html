@@ -1,0 +1,39 @@
+<h2>Profiles</h2>
+<ng-container *ngIf="afAuth.user | withLoading | async as userL">
+  <ng-template [ngIf]="userL.value">
+    <ng-container *ngIf="isAdmin$ | withLoading | async as isAdminL">
+      <div *ngIf="isAdminL.value">
+        <ng-container *ngIf="profiles$ | async as profiles">
+          <ng-container *ngIf="profiles.length; else noProfiles">
+            <div class="row">
+              <div class="col-sm-6 col-md-4 col-lg-2" *ngFor="let profile of profiles">
+                <div class="card">
+                  <img class="card-img-top w-100" [src]="profile[1] | async" [alt]="profile[0].name + '\'s avatar'">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ profile[0].name }}</h5>
+                    <button class="btn btn-outline-danger" (click)="delete(profile[0])">Delete</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
+        <ng-template #noProfiles>
+          <p>There are currently no profiles.</p>
+        </ng-template>
+      </div>
+      <ng-template [ngIf]="isAdminL.loading">
+        <app-loading></app-loading>
+      </ng-template>
+      <ng-template [ngIf]="!isAdminL.loading && (!isAdminL.value || isAdminL.error)">
+        <p>You are not an admin.</p>
+      </ng-template>
+    </ng-container>
+  </ng-template>
+  <ng-template [ngIf]="userL.loading">
+    <app-loading></app-loading>
+  </ng-template>
+  <ng-template [ngIf]="userL.error">
+    <p>Please sign in to use the control panel.</p>
+  </ng-template>
+</ng-container>

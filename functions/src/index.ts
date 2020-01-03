@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 // import * as request from 'request-promise-native';
 import {Artist, Report} from '../../src/utils/firestore-types';
+import {CallableContext} from 'firebase-functions/lib/providers/https';
 
 export class AccessDeniedError extends Error {
   constructor(message = 'Access denied.') {
@@ -18,6 +19,20 @@ admin.initializeApp({
 
 async function isAdmin(uid: string): Promise<boolean> {
   return (await admin.firestore().collection('other').doc('admins').get()).get('admins').includes(uid);
+}
+
+async function authOrAdmin(data: any, context: CallableContext): Promise<string> {
+  if (!context.auth) {
+    throw new AccessDeniedError();
+  }
+  let uid = context.auth.uid;
+  if (data && data !== uid) {
+    if (!await isAdmin(uid)) {
+      throw new AccessDeniedError();
+    }
+    uid = data;
+  }
+  return uid;
 }
 
 async function deleteArtistProfilePure(user: admin.auth.UserRecord) {
@@ -62,10 +77,7 @@ export const becomeArtist = functions.https.onCall(async (data, context) => {
   });*/
 });
 export const deleteProfile = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new AccessDeniedError();
-  }
-  const uid = context.auth.uid;
+  const uid = await authOrAdmin(data, context);
   const user = await admin.auth().getUser(uid);
   const userDoc = await admin.firestore().collection('artists').doc(user.uid).get();
   if (userDoc.exists) {
@@ -77,16 +89,7 @@ export const deleteProfile = functions.https.onCall(async (data, context) => {
   await admin.auth().deleteUser(uid);
 });
 export const deleteArtistProfile = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new AccessDeniedError();
-  }
-  let uid = context.auth.uid;
-  if (data && data !== uid) {
-    if (!await isAdmin(uid)) {
-      throw new AccessDeniedError();
-    }
-    uid = data;
-  }
+  const uid = await authOrAdmin(data, context);
   const user = await admin.auth().getUser(uid);
   await deleteArtistProfilePure(user);
 });

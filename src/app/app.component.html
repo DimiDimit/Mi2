@@ -24,6 +24,9 @@
       </ng-template>
       <ng-container *ngIf="inControlPanel$ | async; else notControlPanel">
         <li class="nav-item">
+          <a class="nav-link" routerLink="/control-panel/profiles" routerLinkActive="active">Profiles</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" routerLink="/control-panel/reports" routerLinkActive="active">Reports</a>
         </li>
       </ng-container>

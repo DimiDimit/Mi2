@@ -11,6 +11,7 @@ import {AngularFireAuth} from '@angular/fire/auth';
 import Swal from 'sweetalert2';
 import {AngularFireFunctions} from '@angular/fire/functions';
 import {getIsAdmin} from '../../utils/profile-utils';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-artist',
@@ -89,7 +90,7 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
     if (user != null) {
       const message = await Swal.fire({
         title: 'Report artist',
-        html: `Please enter the reason you're reporting the artist <b>${(await this.artistDoc.ref.get()).get('name')}</b>:`,
+        html: `Please enter the reason you're reporting the artist <b>${_.escape((await this.artistDoc.ref.get()).get('name'))}</b>:`,
         icon: 'warning',
         input: 'text',
         showCancelButton: true,
@@ -119,7 +120,7 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
     try {
       if (!(await Swal.fire({
         title: 'Delete artist',
-        html: `Are you sure you want to delete the artist <b>${(await this.artistDoc.ref.get()).get('name')}</b>? This action cannot be undone!`,
+        html: `Are you sure you want to delete the artist <b>${_.escape((await this.artistDoc.ref.get()).get('name'))}</b>? This action cannot be undone!`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Delete'
