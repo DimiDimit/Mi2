@@ -96,6 +96,9 @@ export const reportArtist = functions.https.onCall(async (data, context) => {
     throw new AccessDeniedError();
   }
   const uid = context.auth.uid;
+  if (data.reportee === uid) {
+    throw new Error('You can\'t report yourself!');
+  }
   const report: Report = {
     reporter: uid,
     reportee: data.reportee,

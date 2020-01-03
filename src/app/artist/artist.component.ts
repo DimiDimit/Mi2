@@ -25,6 +25,7 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
   public examples: Promise<Promise<string>[]>;
   private newArtist$ = new Subject();
   public isAdmin$: Observable<boolean>;
+  public isThis$: Observable<boolean>;
 
   constructor(private titleService: Title, private router: Router, private route: ActivatedRoute,
               private afAuth: AngularFireAuth, private afs: AngularFirestore,
@@ -48,6 +49,7 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
       this.avatar$ = this.storage.ref(`artists/${this.id}/avatar`).getDownloadURL();
       this.examples = this.storage.storage.ref(`artists/${this.id}/examples`).listAll()
         .then(example => example.items.map(e => e.getDownloadURL()));
+      this.isThis$ = this.afAuth.user.pipe(map(user => user.uid === this.id));
       this.newArtist$.next();
       this.artist$.pipe(takeUntil(this.newArtist$)).subscribe(artist => {
         setTitle(this.titleService, [artist?.[0]?.name || 'Not found', 'Artists']);
