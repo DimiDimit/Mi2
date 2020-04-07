@@ -19,8 +19,8 @@ import * as firebase from 'firebase';
   styleUrls: ['./profile-artist.component.scss']
 })
 export class ProfileArtistComponent extends ComponentWithArtist implements OnInit {
-  @ViewChild('avatar', {static: false}) avatar: ElementRef;
-  @ViewChild('exampleNew', {static: false}) exampleNew: ElementRef;
+  @ViewChild('avatar') avatar: ElementRef;
+  @ViewChild('exampleNew') exampleNew: ElementRef;
 
   form = new FormGroup({
     name: new FormControl('', Validators.required),

@@ -18,7 +18,7 @@ import Swal from 'sweetalert2';
   styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent extends ComponentWithProfile implements OnInit {
-  @ViewChild('avatar', {static: false}) avatar: ElementRef;
+  @ViewChild('avatar') avatar: ElementRef;
 
   form = new FormGroup({
     name: new FormControl('', Validators.required),
