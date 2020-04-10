@@ -23,7 +23,8 @@
               "src/favicon.png",
               "src/favicon-full.png",
               "src/assets",
-              "src/manifest.webmanifest"
+              "src/manifest.webmanifest",
+              "src/firebase-messaging-sw.js"
             ],
             "styles": [
               "node_modules/firebaseui/dist/firebaseui.css",
@@ -54,7 +55,7 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "3mb",
+                  "maximumWarning": "4mb",
                   "maximumError": "5mb"
                 },
                 {
