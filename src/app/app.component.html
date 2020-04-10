@@ -1,65 +1,79 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-  <a class="navbar-brand" routerLink="/">
-    <!--suppress CheckImageSize -->
-    <img src="favicon-full.png" width="30" height="30" class="d-inline-block align-top" alt="">
-    Mi2
-  </a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav"
-          aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarNav">
-    <ul class="navbar-nav mr-auto">
-      <ng-template #notControlPanel>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/home" routerLinkActive="active">Home</a>
+<div class="fw-ui">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <a class="navbar-brand" routerLink="/">
+      <!--suppress CheckImageSize -->
+      <img src="favicon-full.png" width="30" height="30" class="d-inline-block align-top" alt="">
+      Mi2
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <ng-template #notControlPanel>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/home" routerLinkActive="active">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/artists" routerLinkActive="active">Artists</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/bookmarks" routerLinkActive="active"
+               *ngIf="afAuth.user | async">Bookmarks</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/messages" routerLinkActive="active"
+               *ngIf="afAuth.user | async">Messages</a>
+          </li>
+        </ng-template>
+        <ng-container *ngIf="inControlPanel$ | async; else notControlPanel">
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/control-panel/profiles" routerLinkActive="active">Profiles</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/control-panel/reports" routerLinkActive="active">Reports</a>
+          </li>
+        </ng-container>
+      </ul>
+      <ul class="navbar-nav">
+        <li class="nav-item"></li>
+        <li class="nav-item" *ngIf="(inControlPanel$ | async) || (isAdmin$ | async)">
+          <a class="nav-link" [routerLink]="(inControlPanel$ | async) ? '/' : '/control-panel'">
+            {{ (inControlPanel$ | async) ? "Exit control panel" : "Control panel" }}
+          </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/artists" routerLinkActive="active">Artists</a>
+        <li class="nav-item align-self-center" ngbDropdown *ngIf="afAuth.user | async; else signin">
+          <a class="nav-link dropdown-toggle btn py-0 pr-0" id="profileDropdown" ngbDropdownToggle
+             role="button" aria-haspopup="true" aria-expanded="false">
+            <img [src]="avatar$ | async" [alt]="(profile$ | async)?.name" width="30" height="30">
+          </a>
+          <div class="dropdown-menu-right" ngbDropdownMenu aria-labelledby="profileDropdown">
+            <a ngbDropdownItem routerLink="/profile" routerLinkActive="active">My profile</a>
+            <a ngbDropdownItem routerLink="/profile-artist" routerLinkActive="active"
+               *ngIf="(profile$ | async)?.isArtist">My artist profile</a>
+            <div class="dropdown-divider"></div>
+            <button ngbDropdownItem (click)="signOut()">Sign out</button>
+          </div>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/bookmarks" routerLinkActive="active"
-             *ngIf="afAuth.user | async">Bookmarks</a>
-        </li>
-      </ng-template>
-      <ng-container *ngIf="inControlPanel$ | async; else notControlPanel">
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/control-panel/profiles" routerLinkActive="active">Profiles</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/control-panel/reports" routerLinkActive="active">Reports</a>
-        </li>
-      </ng-container>
-    </ul>
-    <ul class="navbar-nav">
-      <li class="nav-item"></li>
-      <li class="nav-item" *ngIf="(inControlPanel$ | async) || (isAdmin$ | async)">
-        <a class="nav-link" [routerLink]="(inControlPanel$ | async) ? '/' : '/control-panel'">
-          {{ (inControlPanel$ | async) ? "Exit control panel" : "Control panel" }}
-        </a>
-      </li>
-      <li class="nav-item align-self-center" ngbDropdown *ngIf="afAuth.user | async; else signin">
-        <a class="nav-link dropdown-toggle btn py-0 pr-0" id="profileDropdown" ngbDropdownToggle
-           role="button" aria-haspopup="true" aria-expanded="false">
-          <img [src]="avatar$ | async" [alt]="(profile$ | async)?.name" width="30" height="30">
-        </a>
-        <div class="dropdown-menu-right" ngbDropdownMenu aria-labelledby="profileDropdown">
-          <a ngbDropdownItem routerLink="/profile" routerLinkActive="active">My profile</a>
-          <a ngbDropdownItem routerLink="/profile-artist" routerLinkActive="active"
-             *ngIf="(profile$ | async)?.isArtist">My artist profile</a>
-          <div class="dropdown-divider"></div>
-          <button ngbDropdownItem (click)="signOut()">Sign out</button>
-        </div>
-      </li>
-      <ng-template #signin>
-        <li class="nav-item">
-          <a class="nav-link" routerLink="/signin" routerLinkActive="active">Sign in</a>
-        </li>
-      </ng-template>
-    </ul>
-  </div>
-</nav>
+        <ng-template #signin>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/signin" routerLinkActive="active">Sign in</a>
+          </li>
+        </ng-template>
+      </ul>
+    </div>
+  </nav>
 
-<div class="body">
-  <router-outlet></router-outlet>
+  <!--<div class="alert alert-primary" role="alert" *ngIf="newMessage$ | async as message">
+    {{ message }}
+    <button type="button" class="close" aria-label="Close" (click)="newMessageDismiss$.next(undefined)">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>-->
+
+  <div class="body ui-c">
+    <router-outlet></router-outlet>
+  </div>
 </div>

@@ -29,11 +29,11 @@ export class ArtistsComponent implements OnInit {
       ),
       map(profile => profile?.bookmarks)
     );
-    this.signedIn$ = combineLatest(this.useBookmarks$, this.afAuth.user).pipe(map(
+    this.signedIn$ = combineLatest([this.useBookmarks$, this.afAuth.user]).pipe(map(
       ([useBookmarks, user]) =>
         !useBookmarks || user != null)
     );
-    this.artists$ = combineLatest(this.useBookmarks$, bookmarks$, this.artistsColl.valueChanges({idField: 'id'})).pipe(
+    this.artists$ = combineLatest([this.useBookmarks$, bookmarks$, this.artistsColl.valueChanges({idField: 'id'})]).pipe(
       map(([useBookmarks, bookmarks, values]) =>
         values.filter(value => !useBookmarks || (bookmarks || []).includes(value.id))
           .map(value => [

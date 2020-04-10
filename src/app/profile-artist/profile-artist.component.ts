@@ -8,7 +8,7 @@ import {AngularFireFunctions} from '@angular/fire/functions';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {first, switchMap, take, takeUntil} from 'rxjs/operators';
 import {Subject} from 'rxjs';
-import {uploadTaskToPromise} from '../../utils/firebase-storage-utils';
+import {uploadTaskToPromise} from '../../utils/firebase-utils';
 import {swalLoading} from '../../utils/other-utils';
 import Swal from 'sweetalert2';
 import * as firebase from 'firebase';
@@ -112,6 +112,7 @@ export class ProfileArtistComponent extends ComponentWithArtist implements OnIni
       await Swal.fire('Artist profile saved',
         'The changes to your artist profile were saved successfully.', 'success');
     } catch (e) {
+      console.error(e);
       await Swal.fire('Error saving artist profile', e.toString(), 'error');
     }
   }

@@ -25,6 +25,10 @@
         <button class="btn btn-primary" type="button" (click)="becomeArtist()" *ngIf="!((profile$ | async)?.isArtist)">
           Become an artist
         </button>
+        <button class="btn btn-primary" type="button" (click)="requestNotifications()"
+                *ngIf="showNotificationPrompt$ | async">
+          Enable notifications
+        </button>
         <button class="btn btn-outline-danger" type="button" (click)="deleteProfile()">Delete profile</button>
         <button class="btn btn-outline-info" type="button" data-toggle="collapse" data-target="#debug"
                 aria-expanded="false"

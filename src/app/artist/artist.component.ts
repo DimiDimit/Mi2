@@ -32,7 +32,7 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
               private afAuth: AngularFireAuth, private afs: AngularFirestore,
               private storage: AngularFireStorage, private fns: AngularFireFunctions) {
     super();
-    this.isAdmin$ = getIsAdmin(afAuth, afs);
+    this.isAdmin$ = getIsAdmin(afAuth);
   }
 
   ngOnInit() {
@@ -50,13 +50,38 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
       this.avatar$ = this.storage.ref(`artists/${this.id}/avatar`).getDownloadURL();
       this.examples = this.storage.storage.ref(`artists/${this.id}/examples`).listAll()
         .then(example => example.items.map(e => e.getDownloadURL()));
-      this.isThis$ = this.afAuth.user.pipe(map(user => user.uid === this.id));
+      this.isThis$ = this.afAuth.user.pipe(map(user => user?.uid === this.id));
       this.newArtist$.next();
       this.artist$.pipe(takeUntil(this.newArtist$)).subscribe(artist => {
         setTitle(this.titleService, [artist?.[0]?.name || 'Not found', 'Artists']);
       });
     });
     this.unsubscribe.subscribe(() => this.newArtist$.complete());
+  }
+
+  async message() {
+    try {
+      const user = this.afAuth.auth.currentUser;
+      if (user != null) {
+        swalLoading('Starting conversation...', 'Please wait while a conversation with this artist is being started...');
+        const id = (await this.fns.functions.httpsCallable('messageArtist')(this.id)).data;
+        await this.router.navigate(['/messages', id]);
+        Swal.close();
+      } else {
+        if ((await Swal.fire({
+          title: 'Sign in required',
+          text: 'You need to sign in to message this artist.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Sign in'
+        })).value) {
+          await this.router.navigate(['/signin']);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      await Swal.fire('Error starting conversation', e.toString(), 'error');
+    }
   }
 
   async toggleBookmark() {
@@ -132,6 +157,7 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
       await this.fns.functions.httpsCallable('deleteArtistProfile')(this.id);
       await Swal.fire('Artist deleted', 'Artist deleted successfully.', 'success');
     } catch (e) {
+      console.error(e);
       await Swal.fire('Error deleting artist', e.toString(), 'error');
     }
   }

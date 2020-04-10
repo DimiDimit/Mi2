@@ -10,6 +10,7 @@ import {Title} from '@angular/platform-browser';
 import {setTitle} from '../utils/other-utils';
 import {Observable, of} from 'rxjs';
 import {AngularFireStorage} from '@angular/fire/storage';
+import {AngularFireMessaging} from '@angular/fire/messaging';
 
 @Component({
   selector: 'app-root',
@@ -24,10 +25,14 @@ export class AppComponent extends ComponentWithProfile implements OnInit {
   inControlPanel$: Observable<boolean>;
   avatar$: Observable<string>;
 
+  /*newMessage$: Observable<any>;
+  newMessageDismiss$ = new Subject<any>();*/
+
   constructor(private router: Router, private route: ActivatedRoute, private titleService: Title,
-              afAuth: AngularFireAuth, afs: AngularFirestore, private storage: AngularFireStorage) {
+              afAuth: AngularFireAuth, afs: AngularFirestore, private storage: AngularFireStorage,
+              private afMessaging: AngularFireMessaging) {
     super(afAuth, afs);
-    this.isAdmin$ = getIsAdmin(afAuth, afs);
+    this.isAdmin$ = getIsAdmin(afAuth);
     this.route$ = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
       map(() => this.route)
@@ -40,6 +45,7 @@ export class AppComponent extends ComponentWithProfile implements OnInit {
     this.avatar$ = this.newProfile$.pipe(switchMap(
       user => this.storage.ref(`profiles/${user.uid}/avatar`).getDownloadURL()
         .pipe(catchError(() => of(user.photoURL)))));
+    // this.newMessage$ = merge(afMessaging.messages, this.newMessageDismiss$);
   }
 
   ngOnInit() {
@@ -61,9 +67,20 @@ export class AppComponent extends ComponentWithProfile implements OnInit {
 
   async signOut() {
     try {
+      const deviceId = localStorage.getItem('deviceId');
+      if (deviceId != null) {
+        const deviceDoc = this.afs.doc(`profiles/${this.afAuth.auth.currentUser.uid}/devices/${deviceId}`);
+        const messagingToken = (await deviceDoc.ref.get()).get('messagingToken');
+        if (messagingToken != null) {
+          this.afMessaging.deleteToken(messagingToken);
+        }
+        await deviceDoc.delete();
+        localStorage.removeItem('deviceId');
+      }
       await this.afAuth.auth.signOut();
       await this.router.navigate(['/']);
     } catch (e) {
+      console.error(e);
       await Swal.fire('Error signing out!', e.toString(), 'error');
     }
   }

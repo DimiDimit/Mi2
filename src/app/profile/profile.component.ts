@@ -5,12 +5,14 @@ import {AngularFirestore} from '@angular/fire/firestore';
 import {AngularFireStorage} from '@angular/fire/storage';
 import {ComponentWithProfile, performSensitiveAction} from '../../utils/profile-utils';
 import {AngularFireFunctions} from '@angular/fire/functions';
-import {uploadTaskToPromise} from '../../utils/firebase-storage-utils';
+import {uploadTaskToPromise} from '../../utils/firebase-utils';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
-import {Subject} from 'rxjs';
-import {first, switchMap, take, takeUntil} from 'rxjs/operators';
+import {Observable, Subject} from 'rxjs';
+import {first, map, switchMap, take, takeUntil} from 'rxjs/operators';
 import {swalLoading} from '../../utils/other-utils';
 import Swal from 'sweetalert2';
+import {AngularFireMessaging} from '@angular/fire/messaging';
+import {Device} from '../../utils/firestore-types';
 
 @Component({
   selector: 'app-profile',
@@ -26,9 +28,17 @@ export class ProfileComponent extends ComponentWithProfile implements OnInit {
   });
   avatarPreview$ = new Subject<string>();
 
+  showNotificationPrompt$: Observable<boolean>;
+
   constructor(private router: Router, afAuth: AngularFireAuth, afs: AngularFirestore,
-              private storage: AngularFireStorage, private fns: AngularFireFunctions) {
+              private storage: AngularFireStorage, private fns: AngularFireFunctions,
+              private afMessaging: AngularFireMessaging) {
     super(afAuth, afs);
+    this.showNotificationPrompt$ = this.afAuth.user.pipe(
+      switchMap(user =>
+        this.afs.doc<Device>(`profiles/${user.uid}/devices/${localStorage.getItem('deviceId')}`).valueChanges()),
+      map(device => device.messagingToken == null)
+    );
   }
 
   ngOnInit() {
@@ -69,6 +79,7 @@ export class ProfileComponent extends ComponentWithProfile implements OnInit {
       await Swal.fire('Profile saved',
         'The changes to your profile were saved successfully.', 'success');
     } catch (e) {
+      console.error(e);
       await Swal.fire('Error saving profile', e.toString(), 'error');
     }
   }
@@ -104,6 +115,18 @@ export class ProfileComponent extends ComponentWithProfile implements OnInit {
       await this.fns.functions.httpsCallable('deleteProfile')();
       await this.router.navigate(['/']);
       await this.afAuth.auth.signOut();
+    });
+  }
+
+  requestNotifications() {
+    this.afMessaging.requestToken.subscribe({
+      next: token => this.afs.doc(`profiles/${this.afAuth.auth.currentUser.uid}/devices/${localStorage.getItem('deviceId')}`)
+        .update({messagingToken: token, showMessaging: false}),
+      error: () => Swal.fire({
+        icon: 'error',
+        title: 'Permission denied',
+        text: 'The notifications permission has been denied! Please go to the settings of your browser to grant it, then click this button again.'
+      })
     });
   }
 }

@@ -10,8 +10,8 @@ export const environment = {
     databaseURL: 'https://d-mi2-1564330446417.firebaseio.com',
     projectId: 'd-mi2-1564330446417',
     storageBucket: 'd-mi2-1564330446417.appspot.com',
-    messagingSenderId: '633390037761'
-    // appId: '1:633390037761:web:a3b75a20ded5e740'
+    messagingSenderId: '633390037761',
+    appId: '1:633390037761:web:a3b75a20ded5e740'
   }
 };
 

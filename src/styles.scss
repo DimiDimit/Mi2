@@ -5,7 +5,26 @@ $primary: #1bc4de;
 @import "~bootstrap/scss/bootstrap";
 @import "~font-awesome/css/font-awesome.min.css";
 
+html, body {
+  height: 100%;
+}
+
 .body {
   overflow-x: hidden;
   position: relative;
+}
+
+.fw-ui {
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+.ui-c {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.pre-wrap {
+  white-space: pre-wrap;
 }

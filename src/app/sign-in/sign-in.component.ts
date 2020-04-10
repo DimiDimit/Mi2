@@ -1,9 +1,9 @@
 import {Component, OnInit} from '@angular/core';
 import {Router} from '@angular/router';
-import {Profile} from '../../utils/firestore-types';
+import {Device, Profile} from '../../utils/firestore-types';
 import {AngularFireAuth} from '@angular/fire/auth';
 import {AngularFirestore} from '@angular/fire/firestore';
-import {uploadTaskToPromise} from '../../utils/firebase-storage-utils';
+import {uploadTaskToPromise} from '../../utils/firebase-utils';
 import {AngularFireStorage} from '@angular/fire/storage';
 
 @Component({
@@ -35,6 +35,11 @@ export class SignInComponent implements OnInit {
         transaction.update(docRef, {});
       }
     });
+    if (localStorage.getItem('deviceId') == null) {
+      const device: Device = {showMessaging: true};
+      const deviceDoc = await this.afs.collection(`profiles/${user.uid}/devices`).add(device);
+      localStorage.setItem('deviceId', deviceDoc.id);
+    }
     await this.router.navigate(['/']);
   }
 }

@@ -26,7 +26,7 @@ export class ControlPanelReportsComponent implements OnInit {
   public reports$: Observable<ParsedReport[]>;
 
   constructor(public afAuth: AngularFireAuth, private afs: AngularFirestore, private storage: AngularFireStorage) {
-    this.isAdmin$ = getIsAdmin(afAuth, afs);
+    this.isAdmin$ = getIsAdmin(afAuth);
     this.reportsColl = afs.collection('reports');
     this.reports$ = this.reportsColl.valueChanges({idField: 'id'}).pipe(map(reports => reports.map(report => ({
       id: report.id,
@@ -49,6 +49,7 @@ export class ControlPanelReportsComponent implements OnInit {
     try {
       await this.reportsColl.doc(report).delete();
     } catch (e) {
+      console.error(e);
       await Swal.fire('Error dismissing report', e.toString(), 'error');
     }
   }

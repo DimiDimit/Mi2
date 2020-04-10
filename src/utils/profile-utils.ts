@@ -3,7 +3,7 @@ import * as firebase from 'firebase';
 import {User} from 'firebase';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Artist, Profile} from './firestore-types';
-import {combineLatest, Observable, ReplaySubject} from 'rxjs';
+import {Observable, ReplaySubject} from 'rxjs';
 import {AngularFireAuth} from '@angular/fire/auth';
 import {Router} from '@angular/router';
 import {SubscribingComponent, swalLoading} from './other-utils';
@@ -109,7 +109,6 @@ export abstract class ComponentWithArtist extends ComponentWithProfile implement
   }
 }
 
-export function getIsAdmin(afAuth: AngularFireAuth, afs: AngularFirestore): Observable<boolean> {
-  return combineLatest(afAuth.user, afs.doc<{ admins: string[]; }>('other/admins').valueChanges()).pipe(map(
-    ([user, admins]) => user != null && admins.admins.includes(user.uid)));
+export function getIsAdmin(afAuth: AngularFireAuth): Observable<boolean> {
+  return afAuth.idTokenResult.pipe(map(result => result?.claims?.admin));
 }

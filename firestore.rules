@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
-      return request.auth.uid in get(/databases/$(database)/documents/other/admins).data.admins;
+      return request.auth.token.admin;
     }
   	function authOrAdmin(uid) {
   		return request.auth.uid == uid || isAdmin();
@@ -13,15 +13,25 @@ service cloud.firestore {
       allow write: if authOrAdmin(uid);
     }
     match /profiles/{uid} {
-      allow read, write: if authOrAdmin(uid);
+      allow read;
+      allow write: if authOrAdmin(uid);
+      match /devices/{id} {
+        allow read, write: if authOrAdmin(uid);
+      }
     }
     match /reports/{id} {
     	allow read: if authOrAdmin(resource.data.reporter);
     	allow write: if isAdmin();
     }
-    match /other {
-    	match /admins {
-      	allow read;
+    match /conversations/{cid} {
+      function isParticipant(data) {
+        return data.profile == request.auth.uid || data.artist == request.auth.uid || isAdmin();
+      }
+      allow read: if resource == null || isParticipant(resource.data);
+      match /messages/{mid} {
+        allow read: if isParticipant(get(/databases/$(database)/documents/conversations/$(cid)).data);
+        allow create: if isParticipant(get(/databases/$(database)/documents/conversations/$(cid)).data) &&
+          request.resource.data.sender == request.auth.uid;
       }
     }
   }

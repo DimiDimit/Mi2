@@ -23,7 +23,7 @@ export class ControlPanelProfilesComponent implements OnInit {
 
   constructor(public afAuth: AngularFireAuth, private afs: AngularFirestore,
               private storage: AngularFireStorage, private fns: AngularFireFunctions) {
-    this.isAdmin$ = getIsAdmin(afAuth, afs);
+    this.isAdmin$ = getIsAdmin(afAuth);
     this.profilesColl = this.afs.collection('profiles');
     this.profiles$ = this.profilesColl.valueChanges({idField: 'id'}).pipe(
       map(profiles => profiles.map(profile =>
@@ -52,6 +52,7 @@ export class ControlPanelProfilesComponent implements OnInit {
       await this.fns.functions.httpsCallable('deleteProfile')(profile.id);
       await Swal.fire('Profile deleted', 'Profile deleted successfully.', 'success');
     } catch (e) {
+      console.error(e);
       await Swal.fire('Error deleting profile', e.toString(), 'error');
     }
   }

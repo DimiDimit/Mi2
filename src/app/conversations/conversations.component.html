@@ -1,0 +1,32 @@
+<ng-container *ngIf="afAuth.user | withLoading | async as userL">
+  <ng-template [ngIf]="userL.value">
+    <ng-container *ngIf="conversations$ | async as conversations">
+      <ng-container *ngIf="conversations.length; else noConversations">
+        <div class="row">
+          <div class="col-sm-6 col-md-4 col-lg-3" *ngFor="let conversation of conversations">
+            <div class="card">
+              <img class="card-img-top w-100" [src]="conversation[1] | async"
+                   [alt]="(conversation[0] | async)?.name + '\'s avatar'">
+              <div class="card-body">
+                <h5 class="card-title">{{ (conversation[0] | async)?.name }}
+                  <small>({{conversation[3] ? 'Artist' : 'User' }})</small></h5>
+                <a class="btn btn-outline-primary stretched-link" [routerLink]="[conversation[2]]">
+                  View messages »
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </ng-container>
+    <ng-template #noConversations>
+      <p>You currently have no messages.</p>
+    </ng-template>
+  </ng-template>
+  <ng-template [ngIf]="userL.loading">
+    <app-loading></app-loading>
+  </ng-template>
+  <ng-template [ngIf]="userL.error">
+    <p>Please sign in to view your messages.</p>
+  </ng-template>
+</ng-container>

@@ -33,6 +33,9 @@ import {ControlPanelComponent} from './control-panel/control-panel.component';
 import {AdminGuard} from './admin.guard';
 import {ControlPanelProfilesComponent} from './control-panel/control-panel-profiles/control-panel-profiles.component';
 import {ControlPanelReportsComponent} from './control-panel/control-panel-reports/control-panel-reports.component';
+import {ConversationsComponent} from './conversations/conversations.component';
+import {ConversationComponent} from './conversation/conversation.component';
+import {AngularFireMessagingModule} from '@angular/fire/messaging';
 
 const redirectUnauthorized = () => redirectUnauthorizedTo(['/signin']);
 const redirectLoggedIn = () => redirectLoggedInTo(['/']);
@@ -52,7 +55,9 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
     ProfileArtistExampleActionsComponent,
     ControlPanelComponent,
     ControlPanelProfilesComponent,
-    ControlPanelReportsComponent
+    ControlPanelReportsComponent,
+    ConversationsComponent,
+    ConversationComponent
   ],
   imports: [
     NgbModule,
@@ -85,6 +90,18 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
         component: ArtistsComponent,
         canActivate: [AngularFireAuthGuard],
         data: {authGuardPipe: redirectUnauthorized, title: 'Bookmarks', bookmarks: true}
+      },
+      {
+        path: 'messages/:id',
+        component: ConversationComponent,
+        canActivate: [AngularFireAuthGuard],
+        data: {authGuardPipe: redirectUnauthorized, title: null}
+      },
+      {
+        path: 'messages',
+        component: ConversationsComponent,
+        canActivate: [AngularFireAuthGuard],
+        data: {authGuardPipe: redirectUnauthorized, title: 'Messages'}
       },
       {
         path: 'control-panel', canActivateChild: [AdminGuard], children: [
@@ -122,12 +139,14 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
     AngularFirestoreModule,
     AngularFireStorageModule,
     AngularFireFunctionsModule,
-    ServiceWorkerModule.register('ngsw-worker.js', {enabled: environment.production}),
+    AngularFireMessagingModule,
+    ServiceWorkerModule.register('/ngsw-worker.js', {enabled: environment.production}),
     ReactiveFormsModule
   ],
   providers: [
     {provide: ErrorHandler, useClass: ErrorService},
-    // {provide: FUNCTIONS_ORIGIN, useValue: 'http://localhost:5001'}
+    // {provide: FUNCTIONS_ORIGIN, useValue: 'http://localhost:5001'},
+    // {provide: SETTINGS, useValue: {host: 'localhost:8080', ssl: false}}
   ],
   bootstrap: [AppComponent]
 })

@@ -1,15 +1,10 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 // import * as request from 'request-promise-native';
-import {Artist, Report} from '../../src/utils/firestore-types';
+import {Artist, Conversation, Report} from '../../src/utils/firestore-types';
 import {CallableContext} from 'firebase-functions/lib/providers/https';
-
-export class AccessDeniedError extends Error {
-  constructor(message = 'Access denied.') {
-    super(message);
-    this.name = 'AccessDeniedError';
-  }
-}
+import {AccessDeniedError} from '../../src/utils/functions-errors';
+import * as moment from 'moment';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('../../../service-account-key.json')),
@@ -17,22 +12,24 @@ admin.initializeApp({
   storageBucket: 'd-mi2-1564330446417.appspot.com'
 });
 
-async function isAdmin(uid: string): Promise<boolean> {
-  return (await admin.firestore().collection('other').doc('admins').get()).get('admins').includes(uid);
+function isAdmin(user: admin.auth.UserRecord): boolean | undefined {
+  return (user.customClaims as { admin?: boolean; } | undefined)?.admin;
 }
 
-async function authOrAdmin(data: any, context: CallableContext): Promise<string> {
+async function authOrAdmin(data: any, context: CallableContext): Promise<[string, admin.auth.UserRecord]> {
   if (!context.auth) {
     throw new AccessDeniedError();
   }
   let uid = context.auth.uid;
+  let user = await admin.auth().getUser(uid);
   if (data && data !== uid) {
-    if (!await isAdmin(uid)) {
+    if (!await isAdmin(user)) {
       throw new AccessDeniedError();
     }
     uid = data;
+    user = await admin.auth().getUser(uid);
   }
-  return uid;
+  return [uid, user];
 }
 
 async function deleteArtistProfilePure(user: admin.auth.UserRecord) {
@@ -77,8 +74,7 @@ export const becomeArtist = functions.https.onCall(async (data, context) => {
   });*/
 });
 export const deleteProfile = functions.https.onCall(async (data, context) => {
-  const uid = await authOrAdmin(data, context);
-  const user = await admin.auth().getUser(uid);
+  const [uid, user] = await authOrAdmin(data, context);
   const userDoc = await admin.firestore().collection('artists').doc(user.uid).get();
   if (userDoc.exists) {
     await deleteArtistProfilePure(user);
@@ -89,8 +85,7 @@ export const deleteProfile = functions.https.onCall(async (data, context) => {
   await admin.auth().deleteUser(uid);
 });
 export const deleteArtistProfile = functions.https.onCall(async (data, context) => {
-  const uid = await authOrAdmin(data, context);
-  const user = await admin.auth().getUser(uid);
+  const [, user] = await authOrAdmin(data, context);
   await deleteArtistProfilePure(user);
 });
 
@@ -109,3 +104,90 @@ export const reportArtist = functions.https.onCall(async (data, context) => {
   };
   await admin.firestore().collection('reports').add(report);
 });
+
+export const messageArtist = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new AccessDeniedError();
+  }
+  const uid = context.auth.uid;
+  if (data === uid) {
+    throw new Error('You can\'t message yourself!');
+  }
+  if (!(await admin.firestore().collection('artists').doc(data).get()).exists) {
+    throw new Error(`Artist ${data} not found!`);
+  }
+  const existingConversations = await admin.firestore().collection('conversations')
+    .where('profile', '==', uid).where('artist', '==', data).get();
+  if (!existingConversations.empty) {
+    return existingConversations.docs[0].id;
+  }
+  const conversation: Conversation = {
+    profile: uid,
+    artist: data,
+    lastTimestamp: admin.firestore.Timestamp.now()
+  };
+  return (await admin.firestore().collection('conversations').add(conversation)).id;
+});
+
+export const onSendMessage = functions.firestore.document('conversations/{cid}/messages/{mid}').onCreate(async (snapshot, context) => {
+  const timestamp = admin.firestore.Timestamp.now();
+  const content = snapshot.get('content').substring(0, 1000);
+  await snapshot.ref.update({timestamp, content});
+  const conversationDoc = admin.firestore().collection('conversations').doc(context.params.cid);
+  await conversationDoc.update({
+    lastTimestamp: timestamp
+  });
+  const conversation = (await conversationDoc.get()).data()!;
+  const profile = conversation['profile'];
+  const artist = conversation['artist'];
+  const sender = snapshot.get('sender');
+  const isSenderProfile = profile === sender;
+  const receiver = isSenderProfile ? artist : profile;
+  const tokens = (await Promise.all((await admin.firestore().collection('profiles').doc(receiver)
+    .collection('devices').listDocuments()).map(device => device.get().then(d => d.get('messagingToken'))))).filter(d => d);
+  if (tokens.length) {
+    await admin.messaging().sendMulticast({
+      notification: {
+        title: 'Mi2 - ' + (await admin.firestore().collection(isSenderProfile ? 'profiles' : 'artists').doc(sender).get()).get('name'),
+        body: content,
+        imageUrl: (await admin.storage().bucket().file(`profiles/${sender}/avatar`).getSignedUrl({
+          action: 'read', expires: moment().add(7, 'days').toDate()
+        }))[0]
+      },
+      android: {
+        collapseKey: sender,
+        priority: 'high',
+        notification: {
+          priority: 'high'
+        }
+      },
+      webpush: {
+        fcmOptions: {
+          link: `https://mi2.dimitrodam.net/messages/${context.params.cid}`
+        }
+      },
+      tokens
+    });
+  }
+});
+
+/*export const sendMessage = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new AccessDeniedError();
+  }
+  const uid = context.auth.uid;
+  const conversationDoc = admin.firestore().collection('conversations').doc(data.conversation);
+  const conversation = await conversationDoc.get();
+  if (!conversation.exists) {
+    throw new Error(`Conversation ${data.conversation} not found!`);
+  }
+  if (conversation.get('profile') !== uid && conversation.get('artist') !== uid) {
+    throw new Error(`You are not a participant of conversation ${data.conversation}!`);
+  }
+  const message: Message = {
+    sender: uid,
+    content: data.content,
+    timestamp: admin.firestore.Timestamp.now()
+  };
+  await conversationDoc.collection('messages').add(message);
+});*/
