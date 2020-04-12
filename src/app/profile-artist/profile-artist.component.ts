@@ -11,7 +11,8 @@ import {Subject} from 'rxjs';
 import {uploadTaskToPromise} from '../../utils/firebase-utils';
 import {swalLoading} from '../../utils/other-utils';
 import Swal from 'sweetalert2';
-import * as firebase from 'firebase';
+import * as firebase from 'firebase/app';
+import 'firebase/storage';
 
 @Component({
   selector: 'app-profile-artist',

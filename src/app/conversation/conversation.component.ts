@@ -10,7 +10,8 @@ import {AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument} 
 import {AngularFireStorage} from '@angular/fire/storage';
 import {compareTimestamps, displayTimestamp} from '../../utils/firebase-utils';
 import Swal from 'sweetalert2';
-import * as firebase from 'firebase';
+import * as firebase from 'firebase/app';
+import 'firebase/firestore';
 import {AngularFireMessaging} from '@angular/fire/messaging';
 
 @Component({

@@ -1,5 +1,6 @@
 import {Component, Input, OnInit} from '@angular/core';
-import * as firebase from 'firebase';
+import * as firebase from 'firebase/app';
+import 'firebase/storage';
 
 @Component({
   selector: 'app-profile-artist-example-actions',

@@ -1,4 +1,6 @@
-import * as firebase from 'firebase';
+import * as firebase from 'firebase/app';
+import 'firebase/firestore';
+import 'firebase/storage';
 import * as moment from 'moment';
 
 /*export async function deleteFirebaseStorageFolder(dir: firebase.storage.Reference) {

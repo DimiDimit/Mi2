@@ -1,6 +1,8 @@
 import Swal from 'sweetalert2';
-import * as firebase from 'firebase';
-import {User} from 'firebase';
+import * as firebase from 'firebase/app';
+import {User} from 'firebase/app';
+import 'firebase/auth';
+import 'firebase/functions';
 import {AngularFirestore, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {Artist, Profile} from './firestore-types';
 import {Observable, ReplaySubject} from 'rxjs';
