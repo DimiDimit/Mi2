@@ -30,10 +30,25 @@ export interface Conversation {
   profile: string;
   artist: string;
   lastTimestamp: firebase.firestore.Timestamp | admin.firestore.Timestamp;
+  requestedAmount?: number;
 }
 
-export interface Message {
-  sender: string;
-  content: string;
+interface BaseMessage {
   timestamp: firebase.firestore.Timestamp;
 }
+
+export interface TextMessage extends BaseMessage {
+  sender: string;
+  content: string;
+}
+
+export interface SystemMessage extends BaseMessage {
+  type: string;
+  initiator: string;
+}
+
+export interface PaymentMessage extends SystemMessage {
+  amount: number;
+}
+
+export type Message = TextMessage | PaymentMessage;

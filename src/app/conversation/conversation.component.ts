@@ -1,6 +1,6 @@
 import {AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
 import {AngularFireAuth} from '@angular/fire/auth';
-import {setTitle, SubscribingComponent} from '../../utils/other-utils';
+import {setTitle, SubscribingComponent, swalLoading} from '../../utils/other-utils';
 import {debounceTime, filter, map, shareReplay, switchMap, takeUntil} from 'rxjs/operators';
 import {combineLatest, Observable, Subject} from 'rxjs';
 import {Artist, Conversation, Device, Message, Profile} from '../../utils/firestore-types';
@@ -13,6 +13,8 @@ import Swal from 'sweetalert2';
 import * as firebase from 'firebase/app';
 import 'firebase/firestore';
 import {AngularFireMessaging} from '@angular/fire/messaging';
+import {AngularFireFunctions} from '@angular/fire/functions';
+import {messageToText} from '../../utils/shared-utils';
 
 @Component({
   selector: 'app-conversation',
@@ -21,6 +23,7 @@ import {AngularFireMessaging} from '@angular/fire/messaging';
 })
 export class ConversationComponent extends SubscribingComponent implements OnInit, AfterViewInit {
   displayTimestamp = displayTimestamp;
+  messageToText = messageToText;
 
   @ViewChild('messageField', {static: false}) messageField: ElementRef;
   @ViewChild('sendButton', {static: false}) sendButton: ElementRef;
@@ -45,7 +48,8 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
 
   constructor(private titleService: Title, private route: ActivatedRoute,
               public afAuth: AngularFireAuth, private afs: AngularFirestore,
-              private storage: AngularFireStorage, private afMessaging: AngularFireMessaging) {
+              private storage: AngularFireStorage, private fns: AngularFireFunctions,
+              private afMessaging: AngularFireMessaging) {
     super();
   }
 
@@ -78,8 +82,8 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
         this.messagesColl.valueChanges()]).pipe(
         map(([user, thisProfileAvatar, otherProfileAvatar, messages]) => messages
           .sort((a, b) => compareTimestamps(a.timestamp, b.timestamp))
-          .map(message => [message, ...(message.sender === user.uid ? thisProfileAvatar : otherProfileAvatar)] as
-            [Message, Profile | Artist, string]))
+          .map(message => [message, ...(('sender' in message ? message.sender : message.initiator) === user.uid ?
+            thisProfileAvatar : otherProfileAvatar)] as [Message, Profile | Artist, string]))
       );
       this.device$ = this.afAuth.user.pipe(switchMap(user =>
         this.afs.doc<Device>(`profiles/${user.uid}/devices/${localStorage.getItem('deviceId')}`).valueChanges()));
@@ -136,6 +140,10 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
     });
   }
 
+  isSystemMessage(message: Message): boolean {
+    return 'type' in message;
+  }
+
   async dismissNotifications() {
     await Swal.fire({
       icon: 'info',
@@ -148,5 +156,35 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
   disableNotifications() {
     return this.afs.doc(`profiles/${this.afAuth.auth.currentUser.uid}/devices/${localStorage.getItem('deviceId')}`)
       .update({showMessaging: false});
+  }
+
+  async requestPayment() {
+    const change = (await this.conversationDoc.ref.get()).get('requestedAmount') != null;
+    try {
+      const value = (await Swal.fire({
+        title: change ? 'Change requested sum' : 'Request payment',
+        text: `Enter the ${change ? 'new ' : ''}sum to request:`,
+        input: 'number',
+        showCancelButton: true,
+        inputValidator: val => {
+          const v = parseFloat(val);
+          if (isNaN(v)) {
+            return 'Please enter a number!';
+          }
+          return !(v >= 0.01 && v <= 1000) && 'Enter a number between 0.01 and 1000!';
+        }
+      })).value;
+      if (value === undefined) {
+        return;
+      }
+      swalLoading(change ? 'Changing requested sum...' : 'Requesting payment...',
+        `Please wait while ${change ? 'the requested sum is being changed' : 'payment is being requested'}...`);
+      await this.fns.functions.httpsCallable('requestOrChangePayment')({conversation: this.id, amount: parseFloat(value)});
+      await Swal.fire(change ? 'Requested sum changed' : 'Payment requested',
+        (change ? 'The requested sum has been changed' : 'Payment has been requested') + ' successfully.', 'success');
+    } catch (e) {
+      console.error(e);
+      await Swal.fire('Error ' + (change ? 'changing sum' : 'requesting payment'), e.toString(), 'error');
+    }
   }
 }

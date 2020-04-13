@@ -10,11 +10,11 @@ service cloud.firestore {
 
     match /artists/{uid} {
       allow read;
-      allow write: if authOrAdmin(uid);
+      allow update: if authOrAdmin(uid);
     }
     match /profiles/{uid} {
       allow read;
-      allow write: if authOrAdmin(uid);
+      allow update: if authOrAdmin(uid);
       match /devices/{id} {
         allow read, write: if authOrAdmin(uid);
       }
@@ -31,7 +31,7 @@ service cloud.firestore {
       match /messages/{mid} {
         allow read: if isParticipant(get(/databases/$(database)/documents/conversations/$(cid)).data);
         allow create: if isParticipant(get(/databases/$(database)/documents/conversations/$(cid)).data) &&
-          request.resource.data.sender == request.auth.uid;
+          request.resource.data.sender == request.auth.uid && !('type' in request.resource.data);
       }
     }
   }

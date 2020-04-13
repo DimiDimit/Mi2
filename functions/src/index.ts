@@ -1,10 +1,11 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 // import * as request from 'request-promise-native';
-import {Artist, Conversation, Report} from '../../src/utils/firestore-types';
+import {Artist, Conversation, Message, PaymentMessage, Report} from '../../src/utils/firestore-types';
 import {CallableContext} from 'firebase-functions/lib/providers/https';
 import {AccessDeniedError} from '../../src/utils/functions-errors';
 import * as moment from 'moment';
+import {messageToText} from '../../src/utils/shared-utils';
 
 admin.initializeApp({
   credential: admin.credential.cert(require('../../../service-account-key.json')),
@@ -43,6 +44,7 @@ async function deleteArtistProfilePure(user: admin.auth.UserRecord) {
   });
   const batch = admin.firestore().batch();
   (await admin.firestore().collection('reports').where('reportee', '==', user.uid).get()).forEach(doc => batch.delete(doc.ref));
+  (await admin.firestore().collection('conversations').where('artist', '==', user.uid).get()).forEach(doc => batch.delete(doc.ref));
   await batch.commit();
 }
 
@@ -81,6 +83,7 @@ export const deleteProfile = functions.https.onCall(async (data, context) => {
   }
   const batch = admin.firestore().batch();
   (await admin.firestore().collection('reports').where('reporter', '==', uid).get()).forEach(doc => batch.delete(doc.ref));
+  (await admin.firestore().collection('conversations').where('profile', '==', uid).get()).forEach(doc => batch.delete(doc.ref));
   await batch.commit();
   await admin.auth().deleteUser(uid);
 });
@@ -130,25 +133,35 @@ export const messageArtist = functions.https.onCall(async (data, context) => {
 });
 
 export const onSendMessage = functions.firestore.document('conversations/{cid}/messages/{mid}').onCreate(async (snapshot, context) => {
-  const timestamp = admin.firestore.Timestamp.now();
-  const content = snapshot.get('content').substring(0, 1000);
-  await snapshot.ref.update({timestamp, content});
+  const message = snapshot.data()!;
+  const isSystemMessage = 'type' in message;
   const conversationDoc = admin.firestore().collection('conversations').doc(context.params.cid);
-  await conversationDoc.update({
-    lastTimestamp: timestamp
-  });
   const conversation = (await conversationDoc.get()).data()!;
   const profile = conversation['profile'];
   const artist = conversation['artist'];
-  const sender = snapshot.get('sender');
+  const sender = isSystemMessage ? message['initiator'] : message['sender'];
   const isSenderProfile = profile === sender;
+  const senderDoc = (await admin.firestore().collection(isSenderProfile ? 'profiles' : 'artists').doc(sender).get()).data()!;
+  const timestamp = admin.firestore.Timestamp.now();
+  const updateData: any = {timestamp};
+  let content: string;
+  if (isSystemMessage) {
+    content = messageToText(message as Message, senderDoc['name']);
+  } else {
+    content = message['content'].substring(0, 1000);
+    updateData.content = content;
+  }
+  await snapshot.ref.update(updateData);
+  await conversationDoc.update({
+    lastTimestamp: timestamp
+  });
   const receiver = isSenderProfile ? artist : profile;
   const tokens = (await Promise.all((await admin.firestore().collection('profiles').doc(receiver)
     .collection('devices').listDocuments()).map(device => device.get().then(d => d.get('messagingToken'))))).filter(d => d);
   if (tokens.length) {
     await admin.messaging().sendMulticast({
       notification: {
-        title: 'Mi2 - ' + (await admin.firestore().collection(isSenderProfile ? 'profiles' : 'artists').doc(sender).get()).get('name'),
+        title: 'Mi2 - ' + senderDoc['name'],
         body: content,
         imageUrl: (await admin.storage().bucket().file(`profiles/${sender}/avatar`).getSignedUrl({
           action: 'read', expires: moment().add(7, 'days').toDate()
@@ -191,3 +204,33 @@ export const onSendMessage = functions.firestore.document('conversations/{cid}/m
   };
   await conversationDoc.collection('messages').add(message);
 });*/
+
+export const requestOrChangePayment = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new AccessDeniedError();
+  }
+  if (data.conversation == null || data.amount == null) {
+    throw new Error('Data object missing properties!');
+  }
+  if (!(data.amount >= 0.01 && data.amount <= 1000)) {
+    throw new Error('Sum must be between 0.01 and 1000!');
+  }
+  const uid = context.auth.uid;
+  const conversationDoc = admin.firestore().collection('conversations').doc(data.conversation);
+  const conversation = await conversationDoc.get();
+  if (!conversation.exists) {
+    throw new Error(`Conversation ${data.conversation} not found!`);
+  }
+  if (conversation.get('artist') !== uid) {
+    throw new Error(`You are not the artist of conversation ${data.conversation}!`);
+  }
+  const change = conversation.get('requestedAmount') != null;
+  await conversationDoc.update({requestedAmount: data.amount});
+  const message: PaymentMessage = {
+    type: change ? 'change' : 'request',
+    initiator: uid,
+    amount: data.amount,
+    timestamp: admin.firestore.Timestamp.now()
+  };
+  await conversationDoc.collection('messages').add(message);
+});

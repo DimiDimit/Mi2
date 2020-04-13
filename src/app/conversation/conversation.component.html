@@ -24,20 +24,25 @@
           <div class="card w-100 {{ !last ? 'mb-1' : '' }}"
                *ngFor="let message of messages$ | async; let last = last" #messageDiv>
             <div class="row no-gutters">
-              <div class="col-3 col-sm-2 col-md-1 mr-1">
+              <div class="col-3 col-sm-2 col-md-1 mr-1" *ngIf="!isSystemMessage(message[0])">
                 <img class="card-img" [src]="message[2]" [alt]="message[1].name + '\'s avatar'">
               </div>
               <div class="col p-1">
-                <h5 class="card-title mb-1">{{ message[1].name }}
+                <h5 class="card-title mb-1">
+                  <span *ngIf="!isSystemMessage(message[0])">{{ message[1].name }}</span>
                   <small class="text-muted" [title]="displayTimestamp(message[0].timestamp, true)">
                     {{ displayTimestamp(message[0].timestamp) }}
                   </small>
                 </h5>
-                <p class="card-text pre-wrap">{{ message[0].content }}</p>
+                <p class="card-text pre-wrap" [style.font-style]="isSystemMessage(message[0]) ? 'italic' : 'normal'">
+                  {{ messageToText(message[0], message[1].name) }}</p>
               </div>
             </div>
           </div>
         </div>
+        <button class="btn btn-outline-primary w-100" (click)="requestPayment()" *ngIf="!(isOtherArtist$ | async)">
+          {{ (conversation$ | async)?.requestedAmount ? 'Change requested sum' : 'Request payment' }}
+        </button>
         <div class="row no-gutters" style="margin-right: -0.5rem;">
           <div class="col pr-2">
             <label class="sr-only" for="messageField">Send a message</label>
