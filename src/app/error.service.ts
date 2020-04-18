@@ -5,13 +5,10 @@ import Swal from 'sweetalert2';
   providedIn: 'root'
 })
 export class ErrorService implements ErrorHandler {
-  constructor() {
-  }
-
-  handleError(error: any): void {
+  async handleError(error: Error) {
     console.error(error);
     try {
-      Swal.fire('Error', error.toString(), 'error');
+      await Swal.fire('Error', error.toString(), 'error');
     } catch {
       alert(error.toString());
     }

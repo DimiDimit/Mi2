@@ -9,11 +9,8 @@ import 'firebase/storage';
 })
 export class ProfileArtistExampleActionsComponent implements OnInit {
   @Input() example: firebase.storage.Reference;
-  @Input() replaceExample: (example: firebase.storage.Reference, input: HTMLInputElement) => any;
-  @Input() deleteExample: (example: firebase.storage.Reference) => any;
-
-  constructor() {
-  }
+  @Input() replaceExample: (example: firebase.storage.Reference, input: HTMLInputElement) => void;
+  @Input() deleteExample: (example: firebase.storage.Reference) => void;
 
   ngOnInit() {
   }

@@ -1,8 +1,8 @@
-/***************************************************************************************************
+/** *************************************************************************************************
  * Load `$localize` onto the global scope - used if i18n tags appear in Angular templates.
  */
 import '@angular/localize/init';
-/***************************************************************************************************
+/** *************************************************************************************************
  * Zone JS is required by default for Angular itself.
  */
 import 'zone.js/dist/zone'; // Included with Angular CLI.
@@ -22,7 +22,7 @@ import 'zone.js/dist/zone'; // Included with Angular CLI.
  * Learn more in https://angular.io/guide/browser-support
  */
 
-/***************************************************************************************************
+/** *************************************************************************************************
  * BROWSER POLYFILLS
  */
 
@@ -61,11 +61,11 @@ import 'zone.js/dist/zone'; // Included with Angular CLI.
  */
 
 
-/***************************************************************************************************
+/** *************************************************************************************************
  * APPLICATION IMPORTS
  */
-// @ts-ignore
 // tslint:disable-next-line:only-arrow-functions
-window.__importDefault = function(mod) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).__importDefault = function(mod) {
   return mod && mod.__esModule ? mod : {default: mod};
 };

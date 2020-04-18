@@ -31,7 +31,9 @@ service cloud.firestore {
       match /messages/{mid} {
         allow read: if isParticipant(get(/databases/$(database)/documents/conversations/$(cid)).data);
         allow create: if isParticipant(get(/databases/$(database)/documents/conversations/$(cid)).data) &&
-          request.resource.data.sender == request.auth.uid && !('type' in request.resource.data);
+          request.resource.data.sender == request.auth.uid && (!('type' in request.resource.data) ||
+          ((request.resource.data.type == 'image' || request.resource.data.type == 'file') &&
+           request.resource.data.url.matches('^https:\\/\\/firebasestorage\\.googleapis\\.com\\/v0\\/b\\/d-mi2-1564330446417\\.appspot\\.com\\/o\\/conversations.+$')));
       }
     }
   }

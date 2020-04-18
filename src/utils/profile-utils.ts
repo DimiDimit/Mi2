@@ -14,6 +14,7 @@ import {filter, map, takeUntil} from 'rxjs/operators';
 import * as _ from 'lodash';
 
 export function callAndNavigate(functions: firebase.functions.Functions, router: Router,
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 callable: string, navigate: any[]): () => Promise<void> {
   return async () => {
     await functions.httpsCallable(callable)();
@@ -32,7 +33,7 @@ interface PerformSensitiveActionStrings {
 }
 
 export async function performSensitiveAction(user: firebase.User, strings: PerformSensitiveActionStrings,
-                                             performAction: () => (any | Promise<any>), verify?: () => (any | Promise<any>)) {
+                                             performAction: () => (void | Promise<void>), verify?: () => (void | Promise<void>)) {
   try {
     if (verify != null) {
       await verify();
@@ -46,7 +47,6 @@ export async function performSensitiveAction(user: firebase.User, strings: Perfo
         Swal.close();
         return;
       } else {
-        // noinspection ExceptionCaughtLocallyJS
         throw e;
       }
     }

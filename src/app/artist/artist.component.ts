@@ -95,7 +95,7 @@ export class ArtistComponent extends SubscribingComponent implements OnInit {
         } else {
           bookmarks = bookmarks.filter(e => e !== this.id);
         }
-        await transaction.update(profileDoc, 'bookmarks', bookmarks);
+        transaction.update(profileDoc, 'bookmarks', bookmarks);
       });
     } else {
       if ((await Swal.fire({

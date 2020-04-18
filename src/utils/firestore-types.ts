@@ -37,18 +37,35 @@ interface BaseMessage {
   timestamp: firebase.firestore.Timestamp;
 }
 
-export interface TextMessage extends BaseMessage {
+export interface UserMessage extends BaseMessage {
   sender: string;
+}
+
+export interface TextMessage extends UserMessage {
   content: string;
 }
 
+export interface ImageMessage extends UserMessage {
+  type: 'image';
+  url: string;
+}
+
+export interface FileMessage extends UserMessage {
+  type: 'file';
+  url: string;
+}
+
+export const paymentMessageTypes = ['request', 'complete', 'change', 'tip'] as const;
+export const systemMessageTypes = paymentMessageTypes;
+
 export interface SystemMessage extends BaseMessage {
-  type: string;
+  type: typeof systemMessageTypes[number];
   initiator: string;
 }
 
 export interface PaymentMessage extends SystemMessage {
+  type: typeof paymentMessageTypes[number];
   amount: number;
 }
 
-export type Message = TextMessage | PaymentMessage;
+export type Message = TextMessage | ImageMessage | FileMessage | PaymentMessage;

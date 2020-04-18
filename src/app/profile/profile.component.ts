@@ -20,7 +20,7 @@ import {Device} from '../../utils/firestore-types';
   styleUrls: ['./profile.component.scss']
 })
 export class ProfileComponent extends ComponentWithProfile implements OnInit {
-  @ViewChild('avatar') avatar: ElementRef;
+  @ViewChild('avatar') avatar: ElementRef<HTMLInputElement>;
 
   form = new FormGroup({
     name: new FormControl('', Validators.required),

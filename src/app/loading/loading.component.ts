@@ -6,11 +6,6 @@ import {Component, OnInit} from '@angular/core';
   styleUrls: ['./loading.component.scss']
 })
 export class LoadingComponent implements OnInit {
-
-  constructor() {
-  }
-
   ngOnInit() {
   }
-
 }

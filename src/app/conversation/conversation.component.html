@@ -34,15 +34,27 @@
                     {{ displayTimestamp(message[0].timestamp) }}
                   </small>
                 </h5>
-                <p class="card-text pre-wrap" [style.font-style]="isSystemMessage(message[0]) ? 'italic' : 'normal'">
-                  {{ messageToText(message[0], message[1].name) }}</p>
+                <ng-container [ngSwitch]="getMessageType(message[0])">
+                  <a [href]="getMessageUrl(message[0])" target="_blank" download *ngSwitchCase="'image'">
+                    <img [src]="getMessageUrl(message[0])" [alt]="getMessageUrl(message[0])" height="200px">
+                  </a>
+                  <ng-container *ngSwitchCase="'file'">
+                    <i>File extension: {{ getMessageUrl(message[0]).split('?')[0].split('.').pop() }}</i>
+                    <a class="btn btn-primary w-100" [href]="getMessageUrl(message[0])" download>Download</a>
+                  </ng-container>
+                  <p [style.font-style]="isSystemMessage(message[0]) ? 'italic' : 'normal'" *ngSwitchDefault
+                     class="card-text pre-wrap">{{ messageToText(message[0], message[1].name) }}</p>
+                </ng-container>
               </div>
             </div>
           </div>
         </div>
-        <button class="btn btn-outline-primary w-100" (click)="requestPayment()" *ngIf="!(isOtherArtist$ | async)">
-          {{ (conversation$ | async)?.requestedAmount ? 'Change requested sum' : 'Request payment' }}
-        </button>
+        <div class="btn-group" role="group" aria-label="More actions">
+          <button class="btn btn-primary" [swal]="sendFileSwal">Send a file</button>
+          <button class="btn btn-outline-primary" (click)="requestPayment()" *ngIf="!(isOtherArtist$ | async)">
+            {{ (conversation$ | async)?.requestedAmount ? 'Change requested sum' : 'Request payment' }}
+          </button>
+        </div>
         <div class="row no-gutters" style="margin-right: -0.5rem;">
           <div class="col pr-2">
             <label class="sr-only" for="messageField">Send a message</label>
@@ -73,3 +85,19 @@
     <p>Please sign in to view your messages.</p>
   </ng-template>
 </ng-container>
+
+<swal title="Send a file" [showCloseButton]="true" [showConfirmButton]="false" #sendFileSwal>
+  <ng-container *swalPortal>
+    <div class="form-group row mr-0 mb-0">
+      <label for="file" class="col-sm-4 col-form-label">Choose a file:</label>
+      <div class="col-sm d-flex">
+        <input type="file" class="form-control-file align-self-center" id="file" #file>
+      </div>
+      <button class="btn btn-primary col-sm-2" (click)="sendFile()"
+              [disabled]="(fileEmpty$ | async) || fileLoading">
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
+              *ngIf="fileLoading"></span> Send
+      </button>
+    </div>
+  </ng-container>
+</swal>

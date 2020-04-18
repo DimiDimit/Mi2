@@ -3,6 +3,8 @@ import {OnDestroy} from '@angular/core';
 import {Subject} from 'rxjs';
 import {Title} from '@angular/platform-browser';
 
+export const imageTypes = ['image/apng', 'image/bmp', 'image/gif', 'image/x-icon', 'image/jpeg', 'image/png', 'image/svg+xml', 'image/webp'];
+
 export function swalLoading(title: string | HTMLElement | JQuery | undefined, text: string | undefined): void {
   // noinspection JSIgnoredPromiseFromCall
   Swal.fire({

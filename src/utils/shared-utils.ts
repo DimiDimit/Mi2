@@ -5,6 +5,10 @@ export function messageToText(message: Message, initiatorName: string): string {
     return message.content;
   }
   switch (message.type) {
+    case 'image':
+      return `${initiatorName} sent an image.`;
+    case 'file':
+      return `${initiatorName} sent a file.`;
     case 'request':
       return `${initiatorName} is requesting a payment of $${message.amount}.`;
     case 'complete':
@@ -18,6 +22,6 @@ export function messageToText(message: Message, initiatorName: string): string {
   }
 }
 
-/*export function messageToObservable(message: Observable<Message>): Observable<string> {
+/* export function messageToObservable(message: Observable<Message>): Observable<string> {
   return message.pipe(map(messageToText));
 }*/

@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 // import * as request from 'request-promise-native';
-import {Artist, Conversation, Message, PaymentMessage, Report} from '../../src/utils/firestore-types';
+import {Artist, Conversation, Message, PaymentMessage, Report, systemMessageTypes} from '../../src/utils/firestore-types';
 import {CallableContext} from 'firebase-functions/lib/providers/https';
 import {AccessDeniedError} from '../../src/utils/functions-errors';
 import * as moment from 'moment';
@@ -134,21 +134,22 @@ export const messageArtist = functions.https.onCall(async (data, context) => {
 
 export const onSendMessage = functions.firestore.document('conversations/{cid}/messages/{mid}').onCreate(async (snapshot, context) => {
   const message = snapshot.data()!;
-  const isSystemMessage = 'type' in message;
+  const hasType = 'type' in message;
+  const isSystemMessage = hasType && systemMessageTypes.includes(message.type);
   const conversationDoc = admin.firestore().collection('conversations').doc(context.params.cid);
   const conversation = (await conversationDoc.get()).data()!;
-  const profile = conversation['profile'];
-  const artist = conversation['artist'];
-  const sender = isSystemMessage ? message['initiator'] : message['sender'];
+  const profile = conversation.profile;
+  const artist = conversation.artist;
+  const sender = isSystemMessage ? message.initiator : message.sender;
   const isSenderProfile = profile === sender;
   const senderDoc = (await admin.firestore().collection(isSenderProfile ? 'profiles' : 'artists').doc(sender).get()).data()!;
   const timestamp = admin.firestore.Timestamp.now();
   const updateData: any = {timestamp};
   let content: string;
-  if (isSystemMessage) {
-    content = messageToText(message as Message, senderDoc['name']);
+  if (hasType) {
+    content = messageToText(message as Message, senderDoc.name);
   } else {
-    content = message['content'].substring(0, 1000);
+    content = message.content.substring(0, 1000);
     updateData.content = content;
   }
   await snapshot.ref.update(updateData);
@@ -161,7 +162,7 @@ export const onSendMessage = functions.firestore.document('conversations/{cid}/m
   if (tokens.length) {
     await admin.messaging().sendMulticast({
       notification: {
-        title: 'Mi2 - ' + senderDoc['name'],
+        title: 'Mi2 - ' + senderDoc.name,
         body: content,
         imageUrl: (await admin.storage().bucket().file(`profiles/${sender}/avatar`).getSignedUrl({
           action: 'read', expires: moment().add(7, 'days').toDate()

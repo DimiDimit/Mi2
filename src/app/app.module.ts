@@ -37,6 +37,7 @@ import {ControlPanelReportsComponent} from './control-panel/control-panel-report
 import {ConversationsComponent} from './conversations/conversations.component';
 import {ConversationComponent} from './conversation/conversation.component';
 import {AngularFireMessagingModule} from '@angular/fire/messaging';
+import {SweetAlert2Module} from '@sweetalert2/ngx-sweetalert2';
 
 const redirectUnauthorized = () => redirectUnauthorizedTo(['/signin']);
 const redirectLoggedIn = () => redirectLoggedInTo(['/']);
@@ -142,7 +143,8 @@ const redirectLoggedIn = () => redirectLoggedInTo(['/']);
     AngularFireFunctionsModule,
     AngularFireMessagingModule,
     ServiceWorkerModule.register('/ngsw-worker.js', {enabled: environment.production}),
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    SweetAlert2Module.forRoot()
   ],
   providers: [
     {provide: ErrorHandler, useClass: ErrorService},

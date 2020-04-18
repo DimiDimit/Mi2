@@ -15,7 +15,7 @@ import {AngularFireAuth} from '@angular/fire/auth';
 export class ArtistsComponent implements OnInit {
   public useBookmarks$: Observable<boolean>;
   private artistsColl: AngularFirestoreCollection<Artist>;
-  public artists$: Observable<[Artist & { id: string; }, Observable<string>, Promise<Promise<string>[]>][]>;
+  public artists$: Observable<[Artist & { id: string }, Observable<string>, Promise<Promise<string>[]>][]>;
   public signedIn$: Observable<boolean>;
 
   constructor(private route: ActivatedRoute, private afAuth: AngularFireAuth,

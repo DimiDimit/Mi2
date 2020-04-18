@@ -25,7 +25,7 @@ export class AppComponent extends ComponentWithProfile implements OnInit {
   inControlPanel$: Observable<boolean>;
   avatar$: Observable<string>;
 
-  /*newMessage$: Observable<any>;
+  /* newMessage$: Observable<any>;
   newMessageDismiss$ = new Subject<any>();*/
 
   constructor(private router: Router, private route: ActivatedRoute, private titleService: Title,

@@ -20,8 +20,8 @@ import 'firebase/storage';
   styleUrls: ['./profile-artist.component.scss']
 })
 export class ProfileArtistComponent extends ComponentWithArtist implements OnInit {
-  @ViewChild('avatar') avatar: ElementRef;
-  @ViewChild('exampleNew') exampleNew: ElementRef;
+  @ViewChild('avatar') avatar: ElementRef<HTMLInputElement>;
+  @ViewChild('exampleNew') exampleNew: ElementRef<HTMLInputElement>;
 
   form = new FormGroup({
     name: new FormControl('', Validators.required),
@@ -74,7 +74,7 @@ export class ProfileArtistComponent extends ComponentWithArtist implements OnIni
     await this.afs.firestore.runTransaction(async transaction => {
       const artistRef = this.afs.firestore.collection('artists').doc(user.uid);
       id = (await transaction.get(artistRef)).get('nextExample') || 0;
-      await transaction.update(artistRef, {nextExample: id + 1});
+      transaction.update(artistRef, {nextExample: id + 1});
     });
     await this.storage.upload(`artists/${user.uid}/examples/${id}`, this.exampleNew.nativeElement.files[0]);
     this.updateExamples(user.uid);

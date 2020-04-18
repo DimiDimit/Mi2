@@ -19,7 +19,7 @@ import * as _ from 'lodash';
 export class ControlPanelProfilesComponent implements OnInit {
   public isAdmin$: Observable<boolean>;
   private profilesColl: AngularFirestoreCollection<Profile>;
-  public profiles$: Observable<[Profile & { id: string; }, Observable<string>][]>;
+  public profiles$: Observable<[Profile & { id: string }, Observable<string>][]>;
 
   constructor(public afAuth: AngularFireAuth, private afs: AngularFirestore,
               private storage: AngularFireStorage, private fns: AngularFireFunctions) {
@@ -37,7 +37,7 @@ export class ControlPanelProfilesComponent implements OnInit {
   ngOnInit() {
   }
 
-  async delete(profile: Profile & { id: string; }) {
+  async delete(profile: Profile & { id: string }) {
     try {
       if (!(await Swal.fire({
         title: 'Delete profile',

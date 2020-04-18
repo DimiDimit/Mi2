@@ -1,14 +1,25 @@
 import {AfterViewInit, Component, ElementRef, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
 import {AngularFireAuth} from '@angular/fire/auth';
-import {setTitle, SubscribingComponent, swalLoading} from '../../utils/other-utils';
-import {debounceTime, filter, map, shareReplay, switchMap, takeUntil} from 'rxjs/operators';
-import {combineLatest, Observable, Subject} from 'rxjs';
-import {Artist, Conversation, Device, Message, Profile} from '../../utils/firestore-types';
+import {imageTypes, setTitle, SubscribingComponent, swalLoading} from '../../utils/other-utils';
+import {debounceTime, filter, map, shareReplay, startWith, switchMap, takeUntil} from 'rxjs/operators';
+import {combineLatest, fromEvent, Observable, Subject} from 'rxjs';
+import {
+  Artist,
+  Conversation,
+  Device,
+  FileMessage,
+  ImageMessage,
+  Message,
+  Profile,
+  systemMessageTypes,
+  TextMessage
+} from '../../utils/firestore-types';
 import {Title} from '@angular/platform-browser';
 import {ActivatedRoute} from '@angular/router';
 import {AngularFirestore, AngularFirestoreCollection, AngularFirestoreDocument} from '@angular/fire/firestore';
 import {AngularFireStorage} from '@angular/fire/storage';
-import {compareTimestamps, displayTimestamp} from '../../utils/firebase-utils';
+import {compareTimestamps, displayTimestamp, uploadTaskToPromise} from '../../utils/firebase-utils';
+import {v4 as uuidv4} from 'uuid';
 import Swal from 'sweetalert2';
 import * as firebase from 'firebase/app';
 import 'firebase/firestore';
@@ -25,11 +36,13 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
   displayTimestamp = displayTimestamp;
   messageToText = messageToText;
 
-  @ViewChild('messageField', {static: false}) messageField: ElementRef;
-  @ViewChild('sendButton', {static: false}) sendButton: ElementRef;
-  @ViewChild('sendLoading', {static: false}) sendLoading: ElementRef;
-  @ViewChild('messagesDiv', {static: false}) messagesDiv: ElementRef;
-  @ViewChildren('messageDiv') messageDiv: QueryList<any>;
+  @ViewChild('messageField') messageField: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('sendButton') sendButton: ElementRef<HTMLButtonElement>;
+  @ViewChild('sendLoading') sendLoading: ElementRef<HTMLSpanElement>;
+  @ViewChild('messagesDiv') messagesDiv: ElementRef<HTMLDivElement>;
+  @ViewChildren('messageDiv') messageDiv: QueryList<ElementRef<HTMLDivElement>>;
+  @ViewChild('file') file: ElementRef<HTMLInputElement>;
+  @ViewChildren('file') files: QueryList<ElementRef<HTMLInputElement>>;
 
   public id: string;
   private conversationDoc: AngularFirestoreDocument<Conversation>;
@@ -45,6 +58,8 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
   public messages$: Observable<[Message, Profile | Artist, string][]>;
   public device$: Observable<Device>;
   private newConversation$ = new Subject();
+  public fileLoading = false;
+  public fileEmpty$: Observable<boolean>;
 
   constructor(private titleService: Title, private route: ActivatedRoute,
               public afAuth: AngularFireAuth, private afs: AngularFirestore,
@@ -98,6 +113,11 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
   ngAfterViewInit() {
     this.messageDiv.changes.pipe(takeUntil(this.unsubscribe), filter(changes => changes?.length > 0), debounceTime(500)).subscribe(() =>
       this.messagesDiv.nativeElement.scrollTop = this.messagesDiv.nativeElement.scrollHeight);
+    this.fileEmpty$ = (this.files.changes as Observable<QueryList<ElementRef<HTMLInputElement>>>).pipe(
+      filter(changes => changes?.length > 0),
+      switchMap(changes => fromEvent(changes.first.nativeElement, 'change')),
+      map(event => !(event.target as HTMLInputElement).files.length),
+      startWith(true));
   }
 
   async sendMessage() {
@@ -108,7 +128,7 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
       this.messageField.nativeElement.readOnly = true;
       this.sendButton.nativeElement.disabled = true;
       this.sendLoading.nativeElement.hidden = false;
-      const message: Message = {
+      const message: TextMessage = {
         sender: this.afAuth.auth.currentUser.uid,
         content: this.messageField.nativeElement.value,
         timestamp: firebase.firestore.Timestamp.now()
@@ -141,7 +161,15 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
   }
 
   isSystemMessage(message: Message): boolean {
-    return 'type' in message;
+    return 'type' in message && (systemMessageTypes as ReadonlyArray<string>).includes(message.type);
+  }
+
+  getMessageType(message: Message): string {
+    return 'type' in message && message.type;
+  }
+
+  getMessageUrl(message: Message): string {
+    return (message as ImageMessage | FileMessage).url;
   }
 
   async dismissNotifications() {
@@ -185,6 +213,38 @@ export class ConversationComponent extends SubscribingComponent implements OnIni
     } catch (e) {
       console.error(e);
       await Swal.fire('Error ' + (change ? 'changing sum' : 'requesting payment'), e.toString(), 'error');
+    }
+  }
+
+  async sendFile() {
+    try {
+      const files = this.file.nativeElement.files;
+      if (!files.length) {
+        return;
+      }
+      const isImage = imageTypes.includes(files[0].type);
+      if (files[0].size >= 20 * 1024 * 1024) {
+        throw new Error('The file you selected is too large! The maximum file size is 20 MiB.');
+      }
+      this.fileLoading = true;
+      const uid = this.afAuth.auth.currentUser.uid;
+      const conversation = (await this.conversationDoc.ref.get()).data();
+      const otherId = conversation.profile === uid ? conversation.artist : conversation.profile;
+      const file = this.storage.storage.ref(`conversations/${uid}/${otherId}/${uuidv4()}.${files[0].name.split('.').pop()}`);
+      await uploadTaskToPromise(file.put(files[0]));
+      const message: ImageMessage | FileMessage = {
+        type: isImage ? 'image' : 'file',
+        sender: uid,
+        url: await file.getDownloadURL(),
+        timestamp: firebase.firestore.Timestamp.now()
+      };
+      await this.messagesColl.add(message as Message);
+      Swal.close();
+    } catch (e) {
+      console.error(e);
+      await Swal.fire('Error sending image', e.toString(), 'error');
+    } finally {
+      this.fileLoading = false;
     }
   }
 }
